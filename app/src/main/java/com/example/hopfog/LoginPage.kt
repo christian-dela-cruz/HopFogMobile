@@ -46,6 +46,7 @@ fun LoginPage(
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 modifier = Modifier.padding(top = 40.dp)
+
             )
             Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 24.dp))
             Text(
@@ -65,19 +66,8 @@ fun LoginPage(
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedContainerColor = HopFogBackground,
-                    unfocusedContainerColor = HopFogBackground,
-                    focusedIndicatorColor = HopFogBlue,
-                    unfocusedIndicatorColor = Color.Gray,
-                    cursorColor = HopFogBlue,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.Gray,
-                    focusedLeadingIconColor = HopFogBlue,
-                    unfocusedLeadingIconColor = Color.Gray,
-                )
+                shape = RoundedCornerShape(16.dp), // Added rounded corners
+                colors = authTextFieldColors() // Using the new helper for colors
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -90,19 +80,8 @@ fun LoginPage(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedContainerColor = HopFogBackground,
-                    unfocusedContainerColor = HopFogBackground,
-                    focusedIndicatorColor = HopFogBlue,
-                    unfocusedIndicatorColor = Color.Gray,
-                    cursorColor = HopFogBlue,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.Gray,
-                    focusedLeadingIconColor = HopFogBlue,
-                    unfocusedLeadingIconColor = Color.Gray
-                )
+                shape = RoundedCornerShape(16.dp), // Added rounded corners
+                colors = authTextFieldColors() // Using the new helper for colors
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -143,7 +122,9 @@ fun LoginPage(
 
             // "Don't have account? Sign Up" text
             val annotatedText = buildAnnotatedString {
-                append("Don't have account? ")
+                withStyle(style = SpanStyle(color = Color.LightGray)) {
+                    append("Don't have account? ")
+                }
                 pushStringAnnotation(tag = "SignUp", annotation = "SignUp")
                 withStyle(style = SpanStyle(color = HopFogBlue, fontWeight = FontWeight.Bold)) {
                     append("Sign Up")
@@ -163,6 +144,23 @@ fun LoginPage(
         }
     }
 }
+
+// A helper function for the text field colors to match your design
+@Composable
+fun authTextFieldColors(): TextFieldColors = TextFieldDefaults.colors(
+    focusedContainerColor = Color.White,
+    unfocusedContainerColor = Color.White,
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    cursorColor = HopFogBlue,
+    focusedIndicatorColor = HopFogBlue,      // Border color when typing
+    unfocusedIndicatorColor = Color.Transparent, // No border color when not focused
+    focusedLabelColor = Color.Gray,
+    unfocusedLabelColor = Color.Gray,
+    focusedLeadingIconColor = HopFogBlue,
+    unfocusedLeadingIconColor = Color.Gray,
+)
+
 
 @Preview(showBackground = true)
 @Composable

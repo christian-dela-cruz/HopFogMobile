@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -32,25 +31,38 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             HopFogTheme {
-                // The NavHost is the container for all your screens
                 val navController = rememberNavController()
 
                 NavHost(navController = navController, startDestination = "landing") {
                     composable("landing") {
-                        LandingScreen(navController = navController)
+                        // Corrected: Passing the click handler lambda
+                        LandingPage(onGetStartedClicked = { navController.navigate("login") })
                     }
                     composable("login") {
                         LoginPage(
-                            onLoginClicked = { /* TODO: Handle login logic */ },
+                            onLoginClicked = {
+                                // Navigate to home and clear the auth flow
+                                navController.navigate("home") {
+                                    popUpTo("landing") { inclusive = true }
+                                }
+                            },
                             onSignUpClicked = { navController.navigate("register") },
-                            onForgotPasswordClicked = { /* TODO: Handle forgot password */ }
+                            onForgotPasswordClicked = { /* TODO */ }
                         )
                     }
                     composable("register") {
                         RegisterPage(
-                            onSignUpClicked = { /* TODO: Handle sign up logic */ },
+                            onSignUpClicked = {
+                                // Navigate to home and clear the auth flow
+                                navController.navigate("home") {
+                                    popUpTo("landing") { inclusive = true }
+                                }
+                            },
                             onBackClicked = { navController.popBackStack() }
                         )
+                    }
+                    composable("home") {
+                        HomePage() // Our new page
                     }
                 }
             }
@@ -58,9 +70,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// --- Landing Screen (Now with NavController) ---
+// Renamed to LandingPage and expects a click listener, not the whole NavController
 @Composable
-fun LandingScreen(navController: NavController) {
+fun LandingPage(onGetStartedClicked: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = HopFogBackground
@@ -88,7 +100,7 @@ fun LandingScreen(navController: NavController) {
             }
             Spacer(modifier = Modifier.weight(2f))
             Button(
-                onClick = { navController.navigate("login") }, // This is the navigation trigger
+                onClick = onGetStartedClicked, // Using the lambda here
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

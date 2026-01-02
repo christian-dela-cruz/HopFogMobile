@@ -35,20 +35,36 @@ fun RegisterPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp)
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally // Centering the content
         ) {
-            TextButton(onClick = onBackClicked) {
+            // --- ADDED THESE ---
+            Text(
+                text = "HopFog",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(top = 40.dp)
+            )
+            Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 24.dp))
+            // ---------------------
+
+            TextButton(
+                onClick = onBackClicked,
+                modifier = Modifier.align(Alignment.Start) // Kept aligned to the start
+            ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Back", color = Color.White, fontSize = 16.sp)
             }
             Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = "Create New Account",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier.align(Alignment.Start)
+                modifier = Modifier.align(Alignment.Start) // Kept aligned to the start
             )
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -60,7 +76,8 @@ fun RegisterPage(
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = textFieldColors()
+                shape = RoundedCornerShape(16.dp),
+                colors = authTextFieldColors()
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -72,7 +89,8 @@ fun RegisterPage(
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = textFieldColors()
+                shape = RoundedCornerShape(16.dp),
+                colors = authTextFieldColors()
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -85,7 +103,8 @@ fun RegisterPage(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
-                colors = textFieldColors()
+                shape = RoundedCornerShape(16.dp),
+                colors = authTextFieldColors()
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -98,7 +117,8 @@ fun RegisterPage(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
-                colors = textFieldColors()
+                shape = RoundedCornerShape(16.dp),
+                colors = authTextFieldColors()
             )
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -116,27 +136,12 @@ fun RegisterPage(
     }
 }
 
-// A helper function to reduce repetition in text field colors
-@Composable
-private fun textFieldColors() = TextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
-    focusedContainerColor = HopFogBackground,
-    unfocusedContainerColor = HopFogBackground,
-    focusedIndicatorColor = HopFogBlue,
-    unfocusedIndicatorColor = Color.Gray,
-    cursorColor = HopFogBlue,
-    focusedLabelColor = Color.White,
-    unfocusedLabelColor = Color.Gray,
-    focusedLeadingIconColor = HopFogBlue,
-    unfocusedLeadingIconColor = Color.Gray
-)
-
 
 @Preview(showBackground = true)
 @Composable
 fun RegisterPagePreview() {
     HopFogTheme {
+        // I also updated the preview function name to match the composable
         RegisterPage({}, {})
     }
 }

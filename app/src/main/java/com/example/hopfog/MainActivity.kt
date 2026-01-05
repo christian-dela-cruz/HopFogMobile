@@ -35,14 +35,13 @@ class MainActivity : ComponentActivity() {
 
                 NavHost(navController = navController, startDestination = "landing") {
                     composable("landing") {
-                        // Corrected: Passing the click handler lambda
                         LandingPage(onGetStartedClicked = { navController.navigate("login") })
                     }
                     composable("login") {
                         LoginPage(
                             onLoginClicked = {
-                                // Navigate to home and clear the auth flow
-                                navController.navigate("home") {
+                                // Navigate to the main app container
+                                navController.navigate("app_main") {
                                     popUpTo("landing") { inclusive = true }
                                 }
                             },
@@ -53,16 +52,17 @@ class MainActivity : ComponentActivity() {
                     composable("register") {
                         RegisterPage(
                             onSignUpClicked = {
-                                // Navigate to home and clear the auth flow
-                                navController.navigate("home") {
+                                // Also navigate to the main app container
+                                navController.navigate("app_main") {
                                     popUpTo("landing") { inclusive = true }
                                 }
                             },
                             onBackClicked = { navController.popBackStack() }
                         )
                     }
-                    composable("home") {
-                        HomePage() // Our new page
+                    // This is the new route for the entire logged-in experience
+                    composable("app_main") {
+                        AppMainPage()
                     }
                 }
             }
@@ -70,13 +70,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Renamed to LandingPage and expects a click listener, not the whole NavController
+// LandingPage remains the same
 @Composable
 fun LandingPage(onGetStartedClicked: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = HopFogBackground
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = HopFogBackground) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -100,7 +97,7 @@ fun LandingPage(onGetStartedClicked: () -> Unit) {
             }
             Spacer(modifier = Modifier.weight(2f))
             Button(
-                onClick = onGetStartedClicked, // Using the lambda here
+                onClick = onGetStartedClicked,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

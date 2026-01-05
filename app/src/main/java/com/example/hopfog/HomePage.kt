@@ -7,15 +7,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,108 +25,54 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * This is the main content for the Home Page, designed to be placed inside a Scaffold.
+ */
 @Composable
-fun HomePage() {
-    var isOnline by remember { mutableStateOf(true) }
+fun HomePageContent() {
+    // This state is just for UI development. It can be moved to a ViewModel later.
+    // NOTE: The online/offline status is now controlled from the TopAppBar in AppMainPage.
+    // For this preview to work, we'll keep a local state.
+    val isOnline = true // Default to online for preview
 
-    Scaffold(
-        containerColor = HopFogBackground,
-        topBar = {
-            // --- CHANGE 1: Used CenterAlignedTopAppBar and increased title font size ---
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "HopFog",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp // Increased font size
-                    )
-                },
-                navigationIcon = {
-                    if (!isOnline) {
-                        IconButton(onClick = { /* TODO: Handle 'X' click */ }) {
-                            Icon(Icons.Default.Close, contentDescription = "Close Connection")
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { isOnline = !isOnline }) {
-                        Icon(
-                            imageVector = if (isOnline) Icons.Default.Sensors else Icons.Default.SensorsOff,
-                            contentDescription = "Connection Status",
-                            tint = if (isOnline) HopFogGreen else HopFogRed
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = HopFogBackground,
-                    titleContentColor = Color.White,
-                    actionIconContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-            )
-        },
-        bottomBar = {
-            NavigationBar(containerColor = Color.Black) {
-                NavigationBarItem(
-                    selected = true, onClick = { /* TODO */ },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                    label = { Text("Home") }
-                )
-                NavigationBarItem(
-                    selected = false, onClick = { /* TODO */ },
-                    icon = { Icon(Icons.Default.ChatBubble, contentDescription = "Chats") },
-                    label = { Text("Chats") }
-                )
-                NavigationBarItem(
-                    selected = false, onClick = { /* TODO */ },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") }
-                )
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            color = HopFogLightBlue
         ) {
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                color = HopFogLightBlue
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    ActionButtons()
-                    Spacer(modifier = Modifier.height(32.dp))
+                ActionButtons()
+                Spacer(modifier = Modifier.height(32.dp))
 
-                    Text(
-                        text = "Nearby",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Nearby",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    if (isOnline) {
-                        NearbyUserList()
-                    } else {
-                        ReadyToHopMessage()
-                    }
+                if (isOnline) {
+                    NearbyUserList()
+                } else {
+                    ReadyToHopMessage()
                 }
             }
         }
     }
 }
+
 
 @Composable
 private fun ActionButtons() {
@@ -138,7 +86,7 @@ private fun ActionButtons() {
             color = HopFogBlue,
             modifier = Modifier
                 .weight(1f)
-                .aspectRatio(1f) // Makes the button a square
+                .aspectRatio(1f)
         )
         ActionButton(
             text = "Send SOS",
@@ -146,7 +94,7 @@ private fun ActionButtons() {
             color = HopFogRed,
             modifier = Modifier
                 .weight(1f)
-                .aspectRatio(1f) // Makes the button a square
+                .aspectRatio(1f)
         )
     }
 }
@@ -163,19 +111,18 @@ private fun ActionButton(text: String, icon: ImageVector, color: Color, modifier
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // --- CHANGE 2: Increased Icon and Text size ---
             Icon(
                 icon,
                 contentDescription = text,
                 tint = Color.White,
-                modifier = Modifier.size(40.dp) // Increased icon size
+                modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp // Increased text size
+                fontSize = 16.sp
             )
         }
     }
@@ -219,10 +166,11 @@ private fun ReadyToHopMessage() {
     }
 }
 
-@Preview(showBackground = true)
+
+@Preview(showBackground = true, backgroundColor = 0xFF212121)
 @Composable
-fun HomePagePreview() {
+fun HomePageContentPreview() {
     HopFogTheme {
-        HomePage()
+        HomePageContent()
     }
 }

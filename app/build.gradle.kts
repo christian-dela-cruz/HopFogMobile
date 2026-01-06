@@ -63,4 +63,15 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
+
+    // Ktor for networking
+    implementation("io.ktor:ktor-client-core:2.3.8")
+    implementation("io.ktor:ktor-client-cio:2.3.8") // The engine you're using
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
+
+    // Coroutines for asynchronous tasks
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 }

@@ -12,7 +12,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,23 +27,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
-/**
- * This is the main content for the Home Page, designed to be placed inside a Scaffold.
- */
 @Composable
-fun HomePageContent() {
-    // This state is just for UI development. It can be moved to a ViewModel later.
-    // NOTE: The online/offline status is now controlled from the TopAppBar in AppMainPage.
-    // For this preview to work, we'll keep a local state.
-    val isOnline = true // Default to online for preview
-
+fun HomePageContent(isOnline: Boolean) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         Spacer(modifier = Modifier.height(16.dp))
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            // This is the fix: Use weight to flexibly fill available height
+            // instead of the aggressive fillMaxSize().
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             color = HopFogLightBlue
         ) {
@@ -53,7 +50,6 @@ fun HomePageContent() {
             ) {
                 ActionButtons()
                 Spacer(modifier = Modifier.height(32.dp))
-
                 Text(
                     text = "Nearby",
                     fontSize = 22.sp,
@@ -62,7 +58,6 @@ fun HomePageContent() {
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-
                 if (isOnline) {
                     NearbyUserList()
                 } else {
@@ -73,29 +68,14 @@ fun HomePageContent() {
     }
 }
 
-
 @Composable
 private fun ActionButtons() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ActionButton(
-            text = "New Message",
-            icon = Icons.Default.Message,
-            color = HopFogBlue,
-            modifier = Modifier
-                .weight(1f)
-                .aspectRatio(1f)
-        )
-        ActionButton(
-            text = "Send SOS",
-            icon = Icons.Default.Campaign,
-            color = HopFogRed,
-            modifier = Modifier
-                .weight(1f)
-                .aspectRatio(1f)
-        )
+        ActionButton(text = "New Message", icon = Icons.Default.Message, color = HopFogBlue, modifier = Modifier.weight(1f).aspectRatio(1f))
+        ActionButton(text = "Send SOS", icon = Icons.Default.Campaign, color = HopFogRed, modifier = Modifier.weight(1f).aspectRatio(1f))
     }
 }
 
@@ -107,23 +87,10 @@ private fun ActionButton(text: String, icon: ImageVector, color: Color, modifier
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(containerColor = color)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = text,
-                tint = Color.White,
-                modifier = Modifier.size(40.dp)
-            )
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(icon, contentDescription = text, tint = Color.White, modifier = Modifier.size(40.dp))
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
+            Text(text, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }
@@ -143,11 +110,7 @@ private fun NearbyUserItem(name: String) {
         color = Color(0xFFFFF9C4)
     ) {
         Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                imageVector = Icons.Default.Face,
-                contentDescription = "User Avatar",
-                modifier = Modifier.size(40.dp).clip(CircleShape).background(HopFogYellow)
-            )
+            Image(imageVector = Icons.Default.Face, contentDescription = "User Avatar", modifier = Modifier.size(40.dp).clip(CircleShape).background(HopFogYellow))
             Spacer(modifier = Modifier.width(16.dp))
             Text(name, fontWeight = FontWeight.Bold, color = Color.Black)
         }
@@ -166,11 +129,19 @@ private fun ReadyToHopMessage() {
     }
 }
 
-
-@Preview(showBackground = true, backgroundColor = 0xFF212121)
+@Preview(name = "Home Page (Online)", showBackground = true)
 @Composable
-fun HomePageContentPreview() {
+fun HomePageContentOnlinePreview() {
     HopFogTheme {
-        HomePageContent()
+        HomePageContent(isOnline = true)
     }
 }
+
+@Preview(name = "Home Page (Offline)", showBackground = true)
+@Composable
+fun HomePageContentOfflinePreview() {
+    HopFogTheme {
+        HomePageContent(isOnline = false)
+    }
+}
+

@@ -21,6 +21,11 @@ import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogBlue
 import com.example.hopfog.ui.theme.HopFogTheme
 
+import android.widget.Toast
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun RegisterPage(
     onSignUpClicked: () -> Unit,
@@ -30,6 +35,9 @@ fun RegisterPage(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize(), color = HopFogBackground) {
         Column(
@@ -123,7 +131,27 @@ fun RegisterPage(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = onSignUpClicked,
+                onClick = {
+                    when {
+                        // 1. Check for empty fields
+                        username.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                            Toast.makeText(context, "Please fill all fields.", Toast.LENGTH_SHORT).show()
+                        }
+                        // 2. Check if passwords match
+                        password != confirmPassword -> {
+                            Toast.makeText(context, "Passwords do not match.", Toast.LENGTH_SHORT).show()
+                        }
+                        // 3. Only if all checks pass, launch the network request
+                        else -> {
+                            coroutineScope.launch {
+                                val success = NetworkManager.registerUser(context, username, email, password)
+                                if (success) {
+                                    onSignUpClicked()
+                                }
+                            }
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

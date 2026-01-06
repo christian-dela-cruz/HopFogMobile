@@ -19,12 +19,20 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+import androidx.compose.runtime.rememberCoroutineScope
+import android.widget.Toast
 import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogBlue
 import com.example.hopfog.ui.theme.HopFogTheme
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext //
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 
 @Composable
 fun LoginPage(
+    userViewModel: UserViewModel = viewModel(),
     onLoginClicked: () -> Unit,
     onSignUpClicked: () -> Unit,
     onForgotPasswordClicked: () -> Unit
@@ -32,6 +40,9 @@ fun LoginPage(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize(), color = HopFogBackground) {
         Column(
@@ -109,7 +120,19 @@ fun LoginPage(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = onLoginClicked,
+                onClick = {
+                    if (email.isBlank() || password.isBlank()) {
+                        Toast.makeText(context, "Please enter username and password.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        coroutineScope.launch {
+                            val resultJson = NetworkManager.loginUser(context, email, password)
+                            if (resultJson != null) {
+                                userViewModel.onLoginSuccess(resultJson)
+                                onLoginClicked()
+                            }
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -145,27 +168,15 @@ fun LoginPage(
     }
 }
 
-// A helper function for the text field colors to match your design
-@Composable
-fun authTextFieldColors(): TextFieldColors = TextFieldDefaults.colors(
-    focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White,
-    focusedTextColor = Color.Black,
-    unfocusedTextColor = Color.Black,
-    cursorColor = HopFogBlue,
-    focusedIndicatorColor = HopFogBlue,      // Border color when typing
-    unfocusedIndicatorColor = Color.Transparent, // No border color when not focused
-    focusedLabelColor = Color.Gray,
-    unfocusedLabelColor = Color.Gray,
-    focusedLeadingIconColor = HopFogBlue,
-    unfocusedLeadingIconColor = Color.Gray,
-)
 
 
 @Preview(showBackground = true)
 @Composable
 fun LoginPagePreview() {
     HopFogTheme {
-        LoginPage({}, {}, {})
+        LoginPage(
+            onLoginClicked = {},
+            onSignUpClicked = {},
+            onForgotPasswordClicked = {})
     }
 }

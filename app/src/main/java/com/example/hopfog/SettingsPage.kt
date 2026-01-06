@@ -27,9 +27,17 @@ import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogRed
 import com.example.hopfog.ui.theme.HopFogTheme
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun SettingsPage(navController: NavController) {
+fun SettingsPage(
+    userViewModel: UserViewModel = viewModel(),
+    navController: NavController
+) {
+    val user by userViewModel.user.collectAsState()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -50,7 +58,9 @@ fun SettingsPage(navController: NavController) {
         }
 
         item {
-            UserProfileCard("Ravene", "ravene0719@gmail.com")
+            UserProfileCard(
+                name = user?.username ?: "Not Logged In",
+                email = user?.email ?: "---")
         }
 
         // Account Settings Group
@@ -82,7 +92,10 @@ fun SettingsPage(navController: NavController) {
         item { InfoItem(text = "App Version: 1.0.0") }
 
         item {
-            LogoutButton()
+            LogoutButton {
+                userViewModel.onLogout()
+                // TODO: Add navigation logic to go back to the login screen
+            }
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -152,9 +165,9 @@ private fun InfoItem(text: String) {
 }
 
 @Composable
-private fun LogoutButton() {
+private fun LogoutButton(onClick: () -> Unit) {
     TextButton(
-        onClick = { /* TODO: Handle logout */ },
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
     ) {

@@ -42,7 +42,10 @@ fun AppMainPage(
 
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
     val topLevelRoutes = setOf("home_content", "chats_content", "settings_content")
+    val subLevelRoutes = setOf("account", "notifications", "help", "terms_of_service", "privacy_policy")
+
     val isTopLevelDestination = currentRoute in topLevelRoutes
 
     Scaffold(
@@ -69,9 +72,18 @@ fun AppMainPage(
                         actionIconContentColor = Color.White
                     )
                 )
-            } else {
+            }  else if (currentRoute in subLevelRoutes) {
                 TopAppBar(
-                    title = { },
+                    title = {
+                        // Show a title based on the route
+                        val titleText = when(currentRoute) {
+                            "account" -> "Account"
+                            "notifications" -> "Notifications"
+                            "help" -> "Help"
+                            else -> ""
+                        }
+                        Text(titleText, color = Color.White, fontWeight = FontWeight.Bold)
+                    },
                     navigationIcon = {
                         IconButton(onClick = { innerNavController.popBackStack() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -101,6 +113,9 @@ fun AppMainPage(
                         onLogoutClicked = onLogout
                     )
                 }
+                composable("notifications") { NotificationsPage() }
+                composable("account") { AccountPage(userViewModel = userViewModel) }
+
                 composable("help") { HelpPage() }
                 composable("terms_of_service") { TermsOfServicePage() }
                 composable("privacy_policy") { PrivacyPolicyPage() }

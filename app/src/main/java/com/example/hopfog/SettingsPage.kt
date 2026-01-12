@@ -67,9 +67,13 @@ fun SettingsPage(
         // Account Settings Group
         item {
             SettingsGroup {
-                SettingsItem(icon = Icons.Default.Person, text = "Account") { /* TODO */ }
+                SettingsItem(icon = Icons.Default.Person, text = "Account") {
+                    navController.navigate("account")
+                }
                 Divider(color = Color.Gray.copy(alpha = 0.5f), thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                SettingsItem(icon = Icons.Default.Notifications, text = "Notifications") { /* TODO */ }
+                SettingsItem(icon = Icons.Default.Notifications, text = "Notifications") {
+                    navController.navigate(("notifications"))
+                }
             }
         }
 
@@ -103,52 +107,9 @@ fun SettingsPage(
 }
 
 
-// --- HELPER COMPOSABLES
+// --- HELPER COMPOSABLE
 
-@Composable
-private fun UserProfileCard(name: String, email: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.DarkGray.copy(alpha = 0.4f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text(text = email, fontSize = 14.sp, color = Color.LightGray)
-        }
-    }
-}
 
-@Composable
-private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.DarkGray.copy(alpha = 0.4f))
-    ) {
-        Column { content() }
-    }
-}
-
-@Composable
-private fun SettingsItem(icon: ImageVector, text: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(imageVector = icon, contentDescription = text, tint = Color.White.copy(alpha = 0.8f))
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = text, color = Color.White, modifier = Modifier.weight(1f))
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-            contentDescription = null,
-            tint = Color.Gray,
-            modifier = Modifier.size(16.dp)
-        )
-    }
-}
 
 @Composable
 private fun InfoItem(text: String) {

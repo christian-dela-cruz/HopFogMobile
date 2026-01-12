@@ -30,7 +30,10 @@ import com.example.hopfog.ui.theme.HopFogRed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppMainPage() {
+fun AppMainPage(
+    userViewModel: UserViewModel,
+    onLogout: () -> Unit
+) {
     val innerNavController = rememberNavController()
 
     // --- STATE MANAGEMENT ---
@@ -91,7 +94,13 @@ fun AppMainPage() {
             ) {
                 composable("home_content") { HomePageContent(isOnline = isOnline) }
                 composable("chats_content") { PlaceholderPage(pageName = "Chats") }
-                composable("settings_content") { SettingsPage(navController = innerNavController) }
+                composable("settings_content") {
+                    SettingsPage(
+                        userViewModel = userViewModel,
+                        navController = innerNavController,
+                        onLogoutClicked = onLogout
+                    )
+                }
                 composable("help") { HelpPage() }
                 composable("terms_of_service") { TermsOfServicePage() }
                 composable("privacy_policy") { PrivacyPolicyPage() }

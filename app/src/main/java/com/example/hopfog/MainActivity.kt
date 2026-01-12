@@ -25,6 +25,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogBlue
 import com.example.hopfog.ui.theme.HopFogTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,6 +34,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HopFogTheme {
                 val navController = rememberNavController()
+                val userViewModel: UserViewModel = viewModel()
 
                 NavHost(navController = navController, startDestination = "landing") {
                     composable("landing") {
@@ -39,6 +42,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("login") {
                         LoginPage(
+                            userViewModel = userViewModel,
                             onLoginClicked = {
                                 // Navigate to the main app container
                                 navController.navigate("app_main") {
@@ -52,17 +56,25 @@ class MainActivity : ComponentActivity() {
                     composable("register") {
                         RegisterPage(
                             onSignUpClicked = {
-                                // Also navigate to the main app container
-                                navController.navigate("app_main") {
+                                navController.navigate("login") {
                                     popUpTo("landing") { inclusive = true }
                                 }
                             },
                             onBackClicked = { navController.popBackStack() }
                         )
                     }
-                    // This is the new route for the entire logged-in experience
                     composable("app_main") {
-                        AppMainPage()
+                        AppMainPage(
+                            userViewModel = userViewModel,
+                            onLogout = {
+                                navController.navigate("landing"){
+                                    popUpTo(0)
+                                }
+                            }
+
+
+                        )
+
                     }
                 }
             }
@@ -70,7 +82,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// LandingPage remains the same
 @Composable
 fun LandingPage(onGetStartedClicked: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = HopFogBackground) {

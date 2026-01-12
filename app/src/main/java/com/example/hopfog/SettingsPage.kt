@@ -33,8 +33,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun SettingsPage(
-    userViewModel: UserViewModel = viewModel(),
-    navController: NavController
+    userViewModel: UserViewModel,
+    navController: NavController,
+    onLogoutClicked: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
 
@@ -94,7 +95,7 @@ fun SettingsPage(
         item {
             LogoutButton {
                 userViewModel.onLogout()
-                // TODO: Add navigation logic to go back to the login screen
+                onLogoutClicked()
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -180,6 +181,10 @@ private fun LogoutButton(onClick: () -> Unit) {
 @Composable
 fun SettingsPagePreview() {
     HopFogTheme {
-        SettingsPage(navController = rememberNavController())
+        SettingsPage(
+            userViewModel = viewModel(),
+            navController = rememberNavController(),
+            onLogoutClicked = {}
+        )
     }
 }

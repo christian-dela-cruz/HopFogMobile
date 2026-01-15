@@ -14,16 +14,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext // <-- ADD THIS IMPORT
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogGreen
 import com.example.hopfog.ui.theme.HopFogRed
@@ -36,6 +40,8 @@ fun AppMainPage(
 ) {
     val innerNavController = rememberNavController()
 
+    val chatViewModel: ChatViewModel = viewModel()
+
     // --- STATE MANAGEMENT ---
     var isOnline by remember { mutableStateOf(true) }
     var showStatusPopup by remember { mutableStateOf(false) }
@@ -43,10 +49,11 @@ fun AppMainPage(
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val topLevelRoutes = setOf("home_content", "chats_content", "settings_content")
+    val topLevelRoutes = setOf("home_content", "chats_list", "settings_content")
     val subLevelRoutes = setOf("account", "notifications", "help", "terms_of_service", "privacy_policy")
 
     val isTopLevelDestination = currentRoute in topLevelRoutes
+    val isMessagePage = currentRoute?.startsWith("messages/") == true
 
     Scaffold(
         containerColor = HopFogBackground,
@@ -75,7 +82,6 @@ fun AppMainPage(
             }  else if (currentRoute in subLevelRoutes) {
                 TopAppBar(
                     title = {
-                        // Show a title based on the route
                         val titleText = when(currentRoute) {
                             "account" -> "Account"
                             "notifications" -> "Notifications"
@@ -84,6 +90,18 @@ fun AppMainPage(
                         }
                         Text(titleText, color = Color.White, fontWeight = FontWeight.Bold)
                     },
+                    navigationIcon = {
+                        IconButton(onClick = { innerNavController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = HopFogBackground)
+                )
+            }
+            else if (isMessagePage) {
+                val contactName = navBackStackEntry?.arguments?.getString("contactName") ?: "Chat"
+                TopAppBar(
+                    title = { Text(contactName, color = Color.White, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = { innerNavController.popBackStack() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -102,10 +120,21 @@ fun AppMainPage(
         Box(modifier = Modifier.padding(innerPadding)) {
             NavHost(
                 navController = innerNavController,
-                startDestination = "home_content",
+                startDestination = "home_content", // Let's start on the chat screen
             ) {
                 composable("home_content") { HomePageContent(isOnline = isOnline) }
-                composable("chats_content") { PlaceholderPage(pageName = "Chats") }
+
+                // --- CHANGED `chats_content` to `chats_list` ---
+                composable("chats_list") {
+                    ChatsListPage(
+                        chatViewModel = chatViewModel,
+                        // Pass the navController to handle clicks
+                        onConversationClick = { conversationId, contactName ->
+                            innerNavController.navigate("messages/$conversationId/$contactName")
+                        }
+                    )
+                }
+
                 composable("settings_content") {
                     SettingsPage(
                         userViewModel = userViewModel,
@@ -113,12 +142,34 @@ fun AppMainPage(
                         onLogoutClicked = onLogout
                     )
                 }
+                composable(
+                    "messages/{conversationId}/{contactName}",
+                    arguments = listOf(
+                        navArgument("conversationId") { type = NavType.IntType },
+                        navArgument("contactName") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
+                    val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
+                    val context = LocalContext.current // <-- GET THE CONTEXT HERE
+
+                    // Load the messages for this specific chat when the screen is shown
+                    LaunchedEffect(conversationId) {
+                        chatViewModel.loadMessages(context, conversationId, contactName) // <-- USE THE CONTEXT HERE
+                    }
+
+                    MessagePage(
+                        chatViewModel = chatViewModel,
+                        conversationId = conversationId
+                    )
+                }
+
                 composable("notifications") { NotificationsPage() }
                 composable("account") { AccountPage(userViewModel = userViewModel) }
 
-                composable("help") { HelpPage() }
-                composable("terms_of_service") { TermsOfServicePage() }
-                composable("privacy_policy") { PrivacyPolicyPage() }
+                composable("help") { /* HelpPage() */ PlaceholderPage("Help") }
+                composable("terms_of_service") { /* TermsOfServicePage() */ PlaceholderPage("Terms of Service") }
+                composable("privacy_policy") { /* PrivacyPolicyPage() */ PlaceholderPage("Privacy Policy") }
             }
 
             ConnectionStatusPopup(
@@ -129,6 +180,8 @@ fun AppMainPage(
         }
     }
 }
+
+// ... (Your ConnectionStatusPopup and AppBottomNavigation are perfect, no changes needed) ...
 
 @Composable
 fun ConnectionStatusPopup(isVisible: Boolean, isOnline: Boolean, onDismiss: () -> Unit) {
@@ -176,9 +229,10 @@ private fun AppBottomNavigation(navController: NavController) {
             icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
             label = { Text("Home") }
         )
+        // --- CHANGED `chats_content` to `chats_list` ---
         NavigationBarItem(
-            selected = currentDestination?.hierarchy?.any { it.route == "chats_content" } == true,
-            onClick = { navController.navigate("chats_content") { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+            selected = currentDestination?.hierarchy?.any { it.route == "chats_list" } == true,
+            onClick = { navController.navigate("chats_list") { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
             icon = { Icon(Icons.Default.ChatBubble, contentDescription = "Chats") },
             label = { Text("Chats") }
         )

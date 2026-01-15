@@ -31,6 +31,11 @@ import androidx.navigation.navArgument
 import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogGreen
 import com.example.hopfog.ui.theme.HopFogRed
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,8 +44,8 @@ fun AppMainPage(
     onLogout: () -> Unit
 ) {
     val innerNavController = rememberNavController()
-
     val chatViewModel: ChatViewModel = viewModel()
+    val context = LocalContext.current
 
     // --- STATE MANAGEMENT ---
     var isOnline by remember { mutableStateOf(true) }
@@ -53,7 +58,7 @@ fun AppMainPage(
     val subLevelRoutes = setOf("account", "notifications", "help", "terms_of_service", "privacy_policy")
 
     val isTopLevelDestination = currentRoute in topLevelRoutes
-    val isMessagePage = currentRoute?.startsWith("messages/") == true
+    val isMessagePage = currentRoute?.startsWith("messages/") == true || currentRoute?.startsWith("sos_messages/") == true
 
     Scaffold(
         containerColor = HopFogBackground,
@@ -107,7 +112,9 @@ fun AppMainPage(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = HopFogBackground)
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = if (currentRoute?.startsWith("sos_messages/") == true) SosBackgroundColor else HopFogBackground
+                    )
                 )
             }
         },
@@ -120,11 +127,22 @@ fun AppMainPage(
         Box(modifier = Modifier.padding(innerPadding)) {
             NavHost(
                 navController = innerNavController,
-                startDestination = "home_content", // Let's start on the chat screen
+                startDestination = "home_content",
             ) {
-                composable("home_content") { HomePageContent(isOnline = isOnline) }
-
-                // --- CHANGED `chats_content` to `chats_list` ---
+                composable("home_content") {
+                    HomePageContent(
+                        isOnline = isOnline,
+                        onSendSosClick = {
+                            // Launch a coroutine to handle the network call
+                            CoroutineScope(Dispatchers.Main).launch {
+                                val sosResponse = NetworkManager.findOrCreateSosChat(context)
+                                if (sosResponse != null) {
+                                    innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}")
+                                }
+                            }
+                        }
+                    )
+                }
                 composable("chats_list") {
                     ChatsListPage(
                         chatViewModel = chatViewModel,
@@ -163,6 +181,26 @@ fun AppMainPage(
                         conversationId = conversationId
                     )
                 }
+                composable(
+                    "sos_messages/{conversationId}/{contactName}",
+                    arguments = listOf(
+                        navArgument("conversationId") { type = NavType.IntType },
+                        navArgument("contactName") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
+                    val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
+
+                    // Load messages for this conversation
+                    LaunchedEffect(conversationId) {
+                        chatViewModel.loadMessages(context, conversationId, contactName)
+                    }
+
+                    SosMessagePage(
+                        chatViewModel = chatViewModel,
+                        conversationId = conversationId
+                    )
+                }
 
                 composable("notifications") { NotificationsPage() }
                 composable("account") { AccountPage(userViewModel = userViewModel) }
@@ -180,8 +218,6 @@ fun AppMainPage(
         }
     }
 }
-
-// ... (Your ConnectionStatusPopup and AppBottomNavigation are perfect, no changes needed) ...
 
 @Composable
 fun ConnectionStatusPopup(isVisible: Boolean, isOnline: Boolean, onDismiss: () -> Unit) {
@@ -229,7 +265,6 @@ private fun AppBottomNavigation(navController: NavController) {
             icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
             label = { Text("Home") }
         )
-        // --- CHANGED `chats_content` to `chats_list` ---
         NavigationBarItem(
             selected = currentDestination?.hierarchy?.any { it.route == "chats_list" } == true,
             onClick = { navController.navigate("chats_list") { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },

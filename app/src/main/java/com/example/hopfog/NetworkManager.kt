@@ -113,18 +113,41 @@ object NetworkManager {
         return try {
             val response: HttpResponse = client.post("$BASE_URL/send_message.php") {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "conversation_id" to conversationId,
-                    "message_text" to messageText
-                ))
+                // --- THIS IS THE FIX ---
+                // Create an instance of our new request class
+                val requestBody = SendMessageRequest(
+                    conversationId = conversationId,
+                    messageText = messageText
+                )
+                // Set the body using the typed object
+                setBody(requestBody)
             }
             response.status == HttpStatusCode.Created
         } catch (e: Exception) {
-            e.printStackTrace()
+            // It's helpful to log the specific error here too
+            Log.e("NetworkManager", "Error sending message: ${e.message}", e)
             context.toast("Error sending message: ${e.message}")
             false
         }
     }
 
+    suspend fun findOrCreateSosChat(context: Context): SosChatResponse? {
+        return try {
+            val response: HttpResponse = client.post("$BASE_URL/create_sos_chat.php")
+
+            if (response.status == HttpStatusCode.OK) {
+                response.body<SosChatResponse>()
+            } else {
+                val errorBody = response.bodyAsText()
+                Log.e("NetworkManager", "Failed to create SOS chat: $errorBody")
+                context.toast("Failed to start SOS chat. See logs.")
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            context.toast("Network error starting SOS chat: ${e.message}")
+            null
+        }
+    }
 
 }

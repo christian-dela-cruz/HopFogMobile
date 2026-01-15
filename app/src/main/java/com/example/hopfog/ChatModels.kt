@@ -3,6 +3,16 @@ package com.example.hopfog
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+
+
+@Serializable
+data class SendMessageRequest(
+    @SerialName("conversation_id")
+    val conversationId: Int,
+    @SerialName("message_text")
+    val messageText: String
+)
+
 @Serializable
 data class ChatConversation(
     @SerialName("conversation_id")
@@ -26,5 +36,15 @@ data class Message(
     @SerialName("sender_id")
     val senderId: Int,
     @SerialName("is_from_current_user")
-    val isFromCurrentUser: Boolean
+    val isFromCurrentUser: Boolean,
+    @SerialName("sender_username")
+    val senderUsername: String
+)
+
+@Serializable
+data class SosChatResponse(
+    @SerialName("conversation_id")
+    val conversationId: Int,
+    @SerialName("contact_name")
+    val contactName: String
 )

@@ -28,14 +28,12 @@ import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
 @Composable
-fun HomePageContent(isOnline: Boolean) {
+fun HomePageContent(isOnline: Boolean, onSendSosClick: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         Spacer(modifier = Modifier.height(16.dp))
         Surface(
-            // This is the fix: Use weight to flexibly fill available height
-            // instead of the aggressive fillMaxSize().
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
@@ -48,7 +46,8 @@ fun HomePageContent(isOnline: Boolean) {
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ActionButtons()
+                // --- CHANGE #2: Pass the click handler down ---
+                ActionButtons(onSendSosClick = onSendSosClick)
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
                     text = "Nearby",
@@ -69,20 +68,38 @@ fun HomePageContent(isOnline: Boolean) {
 }
 
 @Composable
-private fun ActionButtons() {
+private fun ActionButtons(onSendSosClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ActionButton(text = "New Message", icon = Icons.Default.Message, color = HopFogBlue, modifier = Modifier.weight(1f).aspectRatio(1f))
-        ActionButton(text = "Send SOS", icon = Icons.Default.Campaign, color = HopFogRed, modifier = Modifier.weight(1f).aspectRatio(1f))
+        ActionButton(
+            text = "New Message",
+            icon = Icons.Default.Message,
+            color = HopFogBlue,
+            onClick = { /* TODO: New message functionality */ }, // Kept as TODO
+            modifier = Modifier.weight(1f).aspectRatio(1f)
+        )
+        // --- CHANGE #4: Pass the click handler to the SOS button ---
+        ActionButton(
+            text = "Send SOS",
+            icon = Icons.Default.Campaign,
+            color = HopFogRed,
+            onClick = onSendSosClick, // Use the passed-in handler
+            modifier = Modifier.weight(1f).aspectRatio(1f)
+        )
     }
 }
-
 @Composable
-private fun ActionButton(text: String, icon: ImageVector, color: Color, modifier: Modifier = Modifier) {
+private fun ActionButton(
+    text: String,
+    icon: ImageVector,
+    color: Color,
+    onClick: () -> Unit, // Add this
+    modifier: Modifier = Modifier
+) {
     Button(
-        onClick = { /*TODO*/ },
+        onClick = onClick, // Use it here
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(containerColor = color)
@@ -94,7 +111,6 @@ private fun ActionButton(text: String, icon: ImageVector, color: Color, modifier
         }
     }
 }
-
 @Composable
 private fun NearbyUserList() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -133,7 +149,7 @@ private fun ReadyToHopMessage() {
 @Composable
 fun HomePageContentOnlinePreview() {
     HopFogTheme {
-        HomePageContent(isOnline = true)
+        HomePageContent(isOnline = true, onSendSosClick = {}) // Pass an empty lambda for preview
     }
 }
 
@@ -141,7 +157,7 @@ fun HomePageContentOnlinePreview() {
 @Composable
 fun HomePageContentOfflinePreview() {
     HopFogTheme {
-        HomePageContent(isOnline = false)
+        HomePageContent(isOnline = false, onSendSosClick = {})
     }
 }
 

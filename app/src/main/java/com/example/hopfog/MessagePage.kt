@@ -16,6 +16,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.hopfog.ui.theme.HopFogBlue
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.font.FontWeight
+
+
 
 @Composable
 fun MessagePage(
@@ -77,22 +82,49 @@ fun MessagePage(
 
 @Composable
 fun MessageBubble(message: Message) {
+    // Determine alignment and colors based on who sent the message
     val alignment = if (message.isFromCurrentUser) Alignment.End else Alignment.Start
     val backgroundColor = if (message.isFromCurrentUser) HopFogBlue else Color.DarkGray
     val textColor = if (message.isFromCurrentUser) Color.Black else Color.White
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp, alignment),
         verticalAlignment = Alignment.Bottom
     ) {
+
+        if (!message.isFromCurrentUser) {
+            val initial = message.senderUsername.firstOrNull()?.uppercaseChar() ?: 'U'
+
+            UserInitialIcon(initial = initial)
+        }
+
         Box(
             modifier = Modifier
-                .widthIn(max = 300.dp)
+                .widthIn(max = 280.dp) // Slightly smaller to accommodate the icon
                 .background(backgroundColor, RoundedCornerShape(16.dp))
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Text(text = message.messageText, color = textColor)
         }
+    }
+}
+
+@Composable
+fun UserInitialIcon(initial: Char, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(Color.Gray),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initial.toString(),
+            color = Color.White,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

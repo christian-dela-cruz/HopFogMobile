@@ -15,10 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * A collection of reusable UI components for the settings section of the app.
- */
-
 @Composable
 fun UserProfileCard(name: String, email: String) {
     Card(

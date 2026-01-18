@@ -20,6 +20,9 @@ import android.util.Log
 
 object NetworkManager {
     private const val BASE_URL = "http://192.168.254.102/hopfog_api/REST"
+    //private const val BASE_URL = "http://26.166.235.63/hopfog_api/REST"
+
+    //26.166.235.63
 
     private val client = HttpClient(CIO){
         // For automatically handling JSON

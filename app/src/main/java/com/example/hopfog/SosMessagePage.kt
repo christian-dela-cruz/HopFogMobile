@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -15,35 +16,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.HopFogBlue
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
-
 
 val SosBackgroundColor = Color(0xFFD9534F)
-
-@Composable
-fun SosIcon(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(32.dp)
-            .clip(CircleShape)
-            .background(Color.White), // White background for the icon
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "SOS",
-            color = SosBackgroundColor, // Red text color
-            fontWeight = FontWeight.Bold,
-            fontSize = 10.sp
-        )
-    }
-}
 
 @Composable
 fun SosMessagePage(
@@ -71,10 +52,12 @@ fun SosMessagePage(
     Scaffold(
         containerColor = SosBackgroundColor,
         bottomBar = {
-            Column {
+
+            Column(modifier = Modifier.background(Color.Black)) {
+                // Quick Replies Grid
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(8.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -83,14 +66,17 @@ fun SosMessagePage(
                             onClick = { chatViewModel.sendMessage(context, conversationId, reply) },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White.copy(alpha = 0.9f),
-                                contentColor = Color.Black
+                                containerColor = Color.DarkGray, // A slightly darker button color
+                                contentColor = Color.White
                             )
-                        ) { Text(reply, fontSize = 14.sp) }
+                        ) {
+                            Text(reply, fontSize = 14.sp)
+                        }
                     }
                 }
+                // Standard Message Input
                 Row(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedTextField(
@@ -100,13 +86,12 @@ fun SosMessagePage(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color.White,
-                            focusedBorderColor = HopFogBlue,
-                            unfocusedTextColor = Color.White,
+                            unfocusedContainerColor = Color(0xFF1C1C1E),
+                            focusedContainerColor = Color(0xFF1C1C1E),
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedBorderColor = Color.Transparent,
                             focusedTextColor = Color.White,
-                            cursorColor = HopFogBlue,
-                            unfocusedContainerColor = Color.Black.copy(alpha=0.3f),
-                            focusedContainerColor = Color.Black.copy(alpha=0.3f)
+                            unfocusedTextColor = Color.White
                         )
                     )
                     IconButton(onClick = {
@@ -123,11 +108,32 @@ fun SosMessagePage(
     ) { padding ->
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.Bottom
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 8.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(messages) { message ->
-                MessageBubble(message = message)
+                MessageBubble(
+                    message = message,
+                    // You can ignore this for now as requested
+                    iconContent = {
+                        // Special icon for admin messages
+                        if (message.senderUsername.equals("admin", ignoreCase = true)) {
+                            // Using a simple box for now to avoid the SosIcon function
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("SOS", color = SosBackgroundColor, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                            }
+                        }
+                    }
+                )
             }
         }
     }

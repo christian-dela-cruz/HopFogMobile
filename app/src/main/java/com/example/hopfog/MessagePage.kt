@@ -81,11 +81,27 @@ fun MessagePage(
 }
 
 @Composable
-fun MessageBubble(message: Message) {
-    // Determine alignment and colors based on who sent the message
+fun MessageBubble(
+    message: Message,
+    // Add this parameter. It's a composable function that can be null.
+    iconContent: @Composable (() -> Unit)? = null
+) {
     val alignment = if (message.isFromCurrentUser) Alignment.End else Alignment.Start
-    val backgroundColor = if (message.isFromCurrentUser) HopFogBlue else Color.DarkGray
-    val textColor = if (message.isFromCurrentUser) Color.Black else Color.White
+
+    // Determine background color
+    val backgroundColor = when {
+        // Use white for admin, blue for user, gray for others
+        message.senderUsername.equals("admin", ignoreCase = true) -> Color.White
+        message.isFromCurrentUser -> HopFogBlue
+        else -> Color.DarkGray
+    }
+
+    // Determine text color
+    val textColor = if (message.senderUsername.equals("admin", ignoreCase = true) || message.isFromCurrentUser) {
+        Color.Black
+    } else {
+        Color.White
+    }
 
     Row(
         modifier = Modifier
@@ -94,16 +110,22 @@ fun MessageBubble(message: Message) {
         horizontalArrangement = Arrangement.spacedBy(8.dp, alignment),
         verticalAlignment = Alignment.Bottom
     ) {
-
+        // Logic for showing the icon
         if (!message.isFromCurrentUser) {
-            val initial = message.senderUsername.firstOrNull()?.uppercaseChar() ?: 'U'
-
-            UserInitialIcon(initial = initial)
+            if (iconContent != null) {
+                // If a custom icon is provided (like for SOS), use it.
+                iconContent()
+            } else {
+                // Otherwise, fall back to the default user initial icon.
+                val initial = message.senderUsername.firstOrNull()?.uppercaseChar() ?: 'U'
+                UserInitialIcon(initial = initial)
+            }
         }
 
+        // The message bubble itself
         Box(
             modifier = Modifier
-                .widthIn(max = 280.dp) // Slightly smaller to accommodate the icon
+                .widthIn(max = 280.dp)
                 .background(backgroundColor, RoundedCornerShape(16.dp))
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {

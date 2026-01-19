@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -133,16 +134,45 @@ fun AppMainPage(
                     HomePageContent(
                         isOnline = isOnline,
                         onSendSosClick = {
-                            // Launch a coroutine to handle the network call
+                            // --- THIS IS THE NEW LOGIC ---
+                            val prefs = context.getSharedPreferences("HopFogPrefs", Context.MODE_PRIVATE)
+                            val hasAgreed = prefs.getBoolean("hasAgreedToSos", false)
+
+                            if (hasAgreed) {
+                                // If already agreed, go straight to creating the chat
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    val sosResponse = NetworkManager.findOrCreateSosChat(context)
+                                    if (sosResponse != null) {
+                                        innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}")
+                                    }
+                                }
+                            } else {
+                                // If not agreed, go to the agreement page
+                                innerNavController.navigate("sos_agreement")
+                            }
+                        }
+                    )
+                }
+
+                composable("sos_agreement") {
+                    SosAgreementPage(
+                        onAgreed = {
+                            // This is called after the user clicks "Agree"
+                            // Now we create the chat and navigate, replacing the agreement page in the back stack
                             CoroutineScope(Dispatchers.Main).launch {
                                 val sosResponse = NetworkManager.findOrCreateSosChat(context)
                                 if (sosResponse != null) {
-                                    innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}")
+                                    innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}") {
+                                        // Remove the agreement page from history
+                                        popUpTo("sos_agreement") { inclusive = true }
+                                    }
                                 }
                             }
                         }
                     )
                 }
+
+
                 composable("chats_list") {
                     ChatsListPage(
                         chatViewModel = chatViewModel,
@@ -203,7 +233,21 @@ fun AppMainPage(
                 }
 
                 composable("notifications") { NotificationsPage() }
-                composable("account") { AccountPage(userViewModel = userViewModel) }
+
+                composable("account") {
+                    // Pass the innerNavController to the AccountPage
+                    AccountPage(userViewModel = userViewModel, navController = innerNavController)
+                }
+
+                // --- ADD THIS NEW ROUTE ---
+                composable("change_password") {
+                    ChangePasswordPage(
+                        onPasswordChanged = {
+                            // When the password is changed successfully, pop back
+                            innerNavController.popBackStack()
+                        }
+                    )
+                }
 
                 composable("help") { /* HelpPage() */ PlaceholderPage("Help") }
                 composable("terms_of_service") { /* TermsOfServicePage() */ PlaceholderPage("Terms of Service") }

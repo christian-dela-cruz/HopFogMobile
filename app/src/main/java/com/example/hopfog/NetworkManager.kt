@@ -9,8 +9,6 @@ import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import org.json.JSONObject
-
-
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.serialization.kotlinx.json.*
@@ -18,11 +16,14 @@ import kotlinx.serialization.json.Json
 import io.ktor.client.call.body
 import android.util.Log
 
+import io.ktor.client.request.forms.submitForm
+import io.ktor.http.parameters
+
+
 object NetworkManager {
     private const val BASE_URL = "http://192.168.254.102/hopfog_api/REST"
     //private const val BASE_URL = "http://26.166.235.63/hopfog_api/REST"
 
-    //26.166.235.63
 
     private val client = HttpClient(CIO){
         // For automatically handling JSON
@@ -150,6 +151,36 @@ object NetworkManager {
             e.printStackTrace()
             context.toast("Network error starting SOS chat: ${e.message}")
             null
+        }
+    }
+
+    suspend fun changePassword(context: Context, oldPass: String, newPass: String): Boolean {
+        return try {
+            val response: HttpResponse = client.submitForm(
+                url = "$BASE_URL/change_password.php",
+                formParameters = Parameters.build {
+                    append("old_password", oldPass)
+                    append("new_password", newPass)
+                }
+            )
+
+            if (response.status == HttpStatusCode.OK) {
+                // Password changed successfully
+                true
+            } else {
+                // --- THIS IS THE FIX ---
+                // Decode the error using our new serializable class
+                val errorResponse = response.body<GenericErrorResponse>()
+                // Use the error message from the decoded response
+                context.toast(errorResponse.error ?: "An unknown server error occurred.")
+                false
+            }
+        } catch (e: Exception) {
+            // This will catch serialization errors or network failures
+            Log.e("NetworkManager", "Exception in changePassword: ${e.message}")
+            e.printStackTrace()
+            context.toast("Network request failed: ${e.message}")
+            false
         }
     }
 

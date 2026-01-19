@@ -48,3 +48,16 @@ data class SosChatResponse(
     @SerialName("contact_name")
     val contactName: String
 )
+
+@Serializable
+data class ChangePasswordRequest(
+    @SerialName("old_password")
+    val oldPassword: String,
+    @SerialName("new_password")
+    val newPassword: String
+)
+
+@Serializable
+data class GenericErrorResponse(
+    val error: String? = null
+)

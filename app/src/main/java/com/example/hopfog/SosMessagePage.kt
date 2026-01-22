@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -16,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -36,13 +34,26 @@ fun SosMessagePage(
     val listState = rememberLazyListState()
     var text by remember { mutableStateOf("") }
 
+    // --- NEW: Get cooldown state from ViewModel ---
+    val cooldownState by chatViewModel.cooldownState.collectAsState()
+    val isSendingEnabled = cooldownState is CooldownState.Ready
+    // ---
+
     val quickReplies = listOf(
         "I am safe.", "Need medical help.",
         "We are all safe here.", "Need water and food.",
-        "Danger here. Stay Away.", "Need rescue.",
-        "Floodwaters rising.", "Share Location."
+        "Need rescue.", "Floodwaters rising.",
+        "Danger here. Stay Away.","Share Location."
     )
 
+    // This makes sure the timer is cancelled when you navigate away from this screen
+    DisposableEffect(Unit) {
+        onDispose {
+            chatViewModel.cancelCooldown()
+        }
+    }
+
+    // Scroll to the bottom when new messages arrive
     LaunchedEffect(messages) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
@@ -52,22 +63,33 @@ fun SosMessagePage(
     Scaffold(
         containerColor = SosBackgroundColor,
         bottomBar = {
-
             Column(modifier = Modifier.background(Color.Black)) {
                 // Quick Replies Grid
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    // Make the grid take up less space
+                    modifier = Modifier.height(180.dp)
                 ) {
                     items(quickReplies) { reply ->
                         Button(
-                            onClick = { chatViewModel.sendMessage(context, conversationId, reply) },
+                            onClick = {
+                                // The check happens in the ViewModel, but good practice to have it here too
+                                if (isSendingEnabled) {
+                                    chatViewModel.sendMessage(context, conversationId, reply)
+                                }
+                            },
+                            // --- NEW: Disable button during cooldown ---
+                            enabled = isSendingEnabled,
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.DarkGray, // A slightly darker button color
-                                contentColor = Color.White
+                                containerColor = Color.DarkGray,
+                                contentColor = Color.White,
+                                // Make disabled buttons visually distinct
+                                disabledContainerColor = Color(0xFF3A3A3C),
+                                disabledContentColor = Color.Gray
                             )
                         ) {
                             Text(reply, fontSize = 14.sp)
@@ -94,14 +116,28 @@ fun SosMessagePage(
                             unfocusedTextColor = Color.White
                         )
                     )
-                    IconButton(onClick = {
-                        if (text.isNotBlank()) {
-                            chatViewModel.sendMessage(context, conversationId, text)
-                            text = ""
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // --- NEW: Updated IconButton with cooldown logic ---
+                    IconButton(
+                        onClick = {
+                            if (isSendingEnabled && text.isNotBlank()) {
+                                chatViewModel.sendMessage(context, conversationId, text)
+                                text = ""
+                            }
+                        },
+                        enabled = isSendingEnabled && text.isNotBlank()
+                    ) {
+                        if (isSendingEnabled) {
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = HopFogBlue)
+                        } else {
+                            // If on cooldown, show the remaining seconds
+                            val secondsLeft = (cooldownState as? CooldownState.CoolingDown)?.secondsRemaining ?: 0
+                            Text("$secondsLeft", color = Color.Gray, fontWeight = FontWeight.Bold)
                         }
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = HopFogBlue)
                     }
+                    // --- END OF NEW LOGIC ---
                 }
             }
         }
@@ -115,25 +151,7 @@ fun SosMessagePage(
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(messages) { message ->
-                MessageBubble(
-                    message = message,
-                    // You can ignore this for now as requested
-                    iconContent = {
-                        // Special icon for admin messages
-                        if (message.senderUsername.equals("admin", ignoreCase = true)) {
-                            // Using a simple box for now to avoid the SosIcon function
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("SOS", color = SosBackgroundColor, fontWeight = FontWeight.Bold, fontSize = 10.sp)
-                            }
-                        }
-                    }
-                )
+                MessageBubble(message = message)
             }
         }
     }

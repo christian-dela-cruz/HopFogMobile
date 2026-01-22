@@ -80,7 +80,6 @@ private fun ActionButtons(onSendSosClick: () -> Unit) {
             onClick = { /* TODO: New message functionality */ }, // Kept as TODO
             modifier = Modifier.weight(1f).aspectRatio(1f)
         )
-        // --- CHANGE #4: Pass the click handler to the SOS button ---
         ActionButton(
             text = "Send SOS",
             icon = Icons.Default.Campaign,

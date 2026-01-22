@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -12,25 +13,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hopfog.ui.theme.HopFogBlue
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.text.font.FontWeight
-
-
 
 @Composable
 fun MessagePage(
     chatViewModel: ChatViewModel,
     conversationId: Int
 ) {
-    val context = LocalContext.current
     val messages by chatViewModel.messages.collectAsState()
     val listState = rememberLazyListState()
-    var text by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    // --- NEW: Get cooldown state from ViewModel ---
+    val cooldownState by chatViewModel.cooldownState.collectAsState()
+    val isSendingEnabled = cooldownState is CooldownState.Ready
+    // ---
+
+    // This makes sure the timer is cancelled when you navigate away from this screen
+    DisposableEffect(Unit) {
+        onDispose {
+            chatViewModel.cancelCooldown()
+        }
+    }
 
     // Scroll to the bottom when new messages arrive
     LaunchedEffect(messages) {
@@ -42,30 +51,14 @@ fun MessagePage(
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
-            Row(
-                modifier = Modifier.padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    placeholder = { Text("Message...") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = HopFogBlue,
-                        unfocusedBorderColor = Color.Gray,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    )
-                )
-                IconButton(onClick = {
-                    chatViewModel.sendMessage(context, conversationId, text)
-                    text = "" // Clear the input field
-                }) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = HopFogBlue)
-                }
-            }
+            // Use the new MessageInput composable
+            MessageInput(
+                onSendMessage = { messageText ->
+                    chatViewModel.sendMessage(context, conversationId, messageText)
+                },
+                isEnabled = isSendingEnabled,
+                cooldownSeconds = (cooldownState as? CooldownState.CoolingDown)?.secondsRemaining ?: 0
+            )
         }
     ) { padding ->
         LazyColumn(
@@ -81,22 +74,72 @@ fun MessagePage(
 }
 
 @Composable
+fun MessageInput(
+    onSendMessage: (String) -> Unit,
+    isEnabled: Boolean,
+    cooldownSeconds: Int
+) {
+    var text by remember { mutableStateOf("") }
+
+    Row(
+        modifier = Modifier.padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            placeholder = { Text("Message...") },
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(24.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = HopFogBlue,
+                unfocusedBorderColor = Color.Gray,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = HopFogBlue
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // This is now a standard Button to easily show the countdown text
+        Button(
+            onClick = {
+                if (text.isNotBlank()) {
+                    onSendMessage(text)
+                    text = "" // Clear input after sending
+                }
+            },
+            enabled = isEnabled && text.isNotBlank(),
+            shape = CircleShape,
+            modifier = Modifier.size(50.dp),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            if (isEnabled) {
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
+            } else {
+                // If on cooldown, show the remaining seconds
+                Text(text = "$cooldownSeconds")
+            }
+        }
+    }
+}
+
+
+@Composable
 fun MessageBubble(
     message: Message,
-    // Add this parameter. It's a composable function that can be null.
     iconContent: @Composable (() -> Unit)? = null
 ) {
     val alignment = if (message.isFromCurrentUser) Alignment.End else Alignment.Start
 
-    // Determine background color
     val backgroundColor = when {
-        // Use white for admin, blue for user, gray for others
         message.senderUsername.equals("admin", ignoreCase = true) -> Color.White
         message.isFromCurrentUser -> HopFogBlue
         else -> Color.DarkGray
     }
 
-    // Determine text color
     val textColor = if (message.senderUsername.equals("admin", ignoreCase = true) || message.isFromCurrentUser) {
         Color.Black
     } else {
@@ -110,19 +153,15 @@ fun MessageBubble(
         horizontalArrangement = Arrangement.spacedBy(8.dp, alignment),
         verticalAlignment = Alignment.Bottom
     ) {
-        // Logic for showing the icon
         if (!message.isFromCurrentUser) {
             if (iconContent != null) {
-                // If a custom icon is provided (like for SOS), use it.
                 iconContent()
             } else {
-                // Otherwise, fall back to the default user initial icon.
                 val initial = message.senderUsername.firstOrNull()?.uppercaseChar() ?: 'U'
                 UserInitialIcon(initial = initial)
             }
         }
 
-        // The message bubble itself
         Box(
             modifier = Modifier
                 .widthIn(max = 280.dp)

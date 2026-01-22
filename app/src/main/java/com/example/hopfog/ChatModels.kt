@@ -61,3 +61,18 @@ data class ChangePasswordRequest(
 data class GenericErrorResponse(
     val error: String? = null
 )
+
+@Serializable
+data class SendMessageResponse(
+    val success: Boolean,
+    val message: String? = null,
+    // This will capture the 'secondsRemaining' from the server error response
+    @SerialName("secondsRemaining")
+    val secondsRemaining: Int = 0
+)
+
+// This specifically captures the JSON format: {"error": "some message"}
+@Serializable
+data class ErrorResponse(
+    val error: String
+)

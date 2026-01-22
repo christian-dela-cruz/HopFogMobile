@@ -113,25 +113,26 @@ object NetworkManager {
         }
     }
 
-    suspend fun sendMessage(context: Context, conversationId: Int, messageText: String): Boolean {
+    suspend fun sendMessage(context: Context, conversationId: Int, messageText: String): SendMessageResponse? {
         return try {
             val response: HttpResponse = client.post("$BASE_URL/send_message.php") {
                 contentType(ContentType.Application.Json)
-                // --- THIS IS THE FIX ---
-                // Create an instance of our new request class
-                val requestBody = SendMessageRequest(
-                    conversationId = conversationId,
-                    messageText = messageText
-                )
-                // Set the body using the typed object
-                setBody(requestBody)
+                setBody(SendMessageRequest(conversationId = conversationId, messageText = messageText))
             }
-            response.status == HttpStatusCode.Created
+
+            // Check if the HTTP status code indicates success (2xx)
+            if (response.status.isSuccess()) {
+                response.body<SendMessageResponse>()
+            } else {
+                // If the server returned an error code (like 429), try to parse the error body
+                val errorBody = response.body<ErrorResponse>()
+                context.toast(errorBody.error)
+                null // Indicate failure
+            }
         } catch (e: Exception) {
-            // It's helpful to log the specific error here too
-            Log.e("NetworkManager", "Error sending message: ${e.message}", e)
-            context.toast("Error sending message: ${e.message}")
-            false
+            Log.e("NetworkManager", "Exception in sendMessage: ${e.message}")
+            context.toast("Network request failed.")
+            null
         }
     }
 
@@ -183,5 +184,22 @@ object NetworkManager {
             false
         }
     }
+
+    suspend fun runMessageCleanup(context: Context): Boolean {
+        return try {
+            val response: HttpResponse = client.get("$BASE_URL/delete_old_messages.php")
+            // A 204 No Content response is a success.
+            if (response.status == HttpStatusCode.NoContent) {
+                true
+            } else {
+                Log.e("NetworkManager", "Cleanup failed with status: ${response.status}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e("NetworkManager", "Exception during message cleanup: ${e.message}")
+            false
+        }
+    }
+
 
 }

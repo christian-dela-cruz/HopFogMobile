@@ -36,6 +36,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
+import androidx.compose.runtime.LaunchedEffect
+import java.util.concurrent.TimeUnit
+import android.util.Log
+import androidx.navigation.navArgument
+
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +66,31 @@ fun AppMainPage(
 
     val isTopLevelDestination = currentRoute in topLevelRoutes
     val isMessagePage = currentRoute?.startsWith("messages/") == true || currentRoute?.startsWith("sos_messages/") == true
+
+
+    LaunchedEffect(key1 = true) {
+        val prefs = context.getSharedPreferences("HopFogPrefs", Context.MODE_PRIVATE)
+        val lastCleanupTime = prefs.getLong("last_cleanup_time", 0L)
+        val currentTime = System.currentTimeMillis()
+        val oneDayInMillis = TimeUnit.DAYS.toMillis(1)
+
+        // Check if more than 24 hours have passed since the last cleanup
+        if ((currentTime - lastCleanupTime) > oneDayInMillis) {
+            // It's time to run the cleanup. Launch a background task.
+            launch(Dispatchers.IO) {
+                val success = NetworkManager.runMessageCleanup(context)
+                if (success) {
+                    // If successful, save the current time as the new last cleanup time.
+                    prefs.edit().putLong("last_cleanup_time", currentTime).apply()
+                    Log.d("Cleanup", "Successfully ran message cleanup task.")
+                }
+            }
+        } else {
+            Log.d("Cleanup", "Not time for cleanup yet.")
+        }
+    }
+
+
 
     Scaffold(
         containerColor = HopFogBackground,
@@ -239,7 +270,6 @@ fun AppMainPage(
                     AccountPage(userViewModel = userViewModel, navController = innerNavController)
                 }
 
-                // --- ADD THIS NEW ROUTE ---
                 composable("change_password") {
                     ChangePasswordPage(
                         onPasswordChanged = {

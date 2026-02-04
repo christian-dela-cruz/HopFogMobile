@@ -10,6 +10,7 @@ import com.example.hopfog.ui.theme.HopFogBlue
  * A shared composable function that defines the consistent color scheme
  * for the text fields on the Login and Register pages.
  */
+
 @Composable
 fun authTextFieldColors(): TextFieldColors {
     // This is the style from your RegisterPage

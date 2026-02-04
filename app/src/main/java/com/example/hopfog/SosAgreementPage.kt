@@ -1,6 +1,6 @@
 package com.example.hopfog
 
-import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,11 +18,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.HopFogRed
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 
 @Composable
 fun SosAgreementPage(onAgreed: () -> Unit) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope() // <-- FIX 3: Moved scope to the top level
 
     Column(
         modifier = Modifier
@@ -42,7 +48,7 @@ fun SosAgreementPage(onAgreed: () -> Unit) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(scrollState) // Make the terms scrollable
+                .verticalScroll(scrollState)
         ) {
             TermItem(
                 title = "For Emergency Use Only",
@@ -66,10 +72,22 @@ fun SosAgreementPage(onAgreed: () -> Unit) {
 
         Button(
             onClick = {
-                // Use the new SessionManager to save the agreement for the current user.
-                SessionManager.setHasAgreedToSos(context, true)
-                // Then, tell the AppMainPage to continue.
-                onAgreed()
+                // Launch a background task to call the network.
+                scope.launch {
+                    val wasSuccessful = NetworkManager.agreeToSos(context)
+
+                    // Switch back to the UI thread to show a Toast.
+                    withContext(Dispatchers.Main) {
+                        if (wasSuccessful) {
+                            Toast.makeText(context, "Agreement saved!", Toast.LENGTH_SHORT).show()
+                            // If successful, proceed to the chat page.
+                            onAgreed()
+                        } else {
+                            // If it failed, show an error message and stay on this page.
+                            Toast.makeText(context, "Failed to save agreement. Please try again.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()

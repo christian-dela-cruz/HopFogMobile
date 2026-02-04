@@ -40,7 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import java.util.concurrent.TimeUnit
 import android.util.Log
 import androidx.navigation.navArgument
-
+import android.widget.Toast
 
 
 
@@ -189,17 +189,19 @@ fun AppMainPage(
                 composable("sos_agreement") {
                     SosAgreementPage(
                         onAgreed = {
-                            // STEP 1: Immediately save that the user has agreed.
-                            SessionManager.setHasAgreedToSos(context, true)
-
-                            // STEP 2: THEN, proceed to create the chat and navigate.
+                            // The SosAgreementPage already told the server the user agreed.
+                            // All we need to do now is create the chat and navigate there.
                             CoroutineScope(Dispatchers.Main).launch {
                                 val sosResponse = NetworkManager.findOrCreateSosChat(context)
                                 if (sosResponse != null) {
                                     innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}") {
-                                        // This removes the agreement page from the back stack
+                                        // This is important: it removes the agreement page from the back stack
+                                        // so the user can't press "back" and go to it again.
                                         popUpTo("sos_agreement") { inclusive = true }
                                     }
+                                } else {
+                                    // Optional: Show a toast if for some reason the chat can't be created
+                                    Toast.makeText(context, "Could not create SOS chat. Please try again.", Toast.LENGTH_LONG).show()
                                 }
                             }
                         }

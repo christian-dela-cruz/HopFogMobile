@@ -77,7 +77,21 @@ object NetworkManager {
             val success = jsonObject.optBoolean("success", false)
 
             if (success) {
-                jsonObject // Return the whole object on success
+                // --- THIS IS THE NEW LOGIC ---
+                // 1. Get the 'user' object from the response
+                val userJson = jsonObject.getJSONObject("user")
+
+                // 2. Extract all the user data
+                val userId = userJson.getInt("user_id")
+                val userUsername = userJson.getString("username")
+                // 3. Get the new boolean flag (default to false if not found)
+                val hasAgreed = userJson.optBoolean("has_agreed_sos", false)
+
+                // 4. Save EVERYTHING to the SessionManager
+                SessionManager.saveSession(context, userId, userUsername, hasAgreed)
+                // --- END OF NEW LOGIC ---
+
+                jsonObject // Return the whole object to the UI to signal success
             } else {
                 val message = jsonObject.optString("message", "An unknown error occurred.")
                 context.toast(message)
@@ -194,6 +208,49 @@ object NetworkManager {
             }
         } catch (e: Exception) {
             Log.e("NetworkManager", "Exception during message cleanup: ${e.message}")
+            false
+        }
+    }
+
+// In NetworkManager.kt
+
+    // ADD THIS NEW, CORRECT FUNCTION TO YOUR NetworkManager.kt
+
+    suspend fun agreeToSos(context: Context): Boolean {
+        // This function will return 'true' on success and 'false' on failure.
+        return try {
+            val userId = SessionManager.getUserId(context)
+            if (userId == -1) {
+                // Cannot agree if no user is logged in.
+                return false
+            }
+
+            // Make the POST request to your new PHP script.
+            val response: HttpResponse = client.post("$BASE_URL/agree_to_sos.php") {
+                contentType(ContentType.Application.Json) // Let the server know we're sending JSON
+                setBody(mapOf("user_id" to userId)) // Send the user_id in the body
+            }
+
+            // Check the response from the server.
+            if (response.status == HttpStatusCode.OK) {
+                val body = response.bodyAsText()
+                val jsonObject = JSONObject(body)
+                val success = jsonObject.optBoolean("success", false)
+
+                if (success) {
+                    // If the database was updated, also update our local session to match.
+                    SessionManager.setHasAgreedToSos(context, true)
+                }
+                success // Return the success status (true or false).
+            } else {
+                // The server returned an error (e.g., 404, 500).
+                context.toast("Server error: ${response.status.value}")
+                false
+            }
+        } catch (e: Exception) {
+            // A network error occurred.
+            e.printStackTrace()
+            context.toast("Network error agreeing to SOS: ${e.message}")
             false
         }
     }

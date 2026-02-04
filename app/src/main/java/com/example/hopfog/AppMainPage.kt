@@ -54,7 +54,6 @@ fun AppMainPage(
     val chatViewModel: ChatViewModel = viewModel()
     val context = LocalContext.current
 
-    // --- STATE MANAGEMENT ---
     var isOnline by remember { mutableStateOf(true) }
     var showStatusPopup by remember { mutableStateOf(false) }
 
@@ -62,7 +61,7 @@ fun AppMainPage(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val topLevelRoutes = setOf("home_content", "chats_list", "settings_content")
-    val subLevelRoutes = setOf("account", "notifications", "help", "terms_of_service", "privacy_policy")
+    val subLevelRoutes = setOf("account", "notifications", "help", "terms_of_service", "privacy_policy", "change_password")
 
     val isTopLevelDestination = currentRoute in topLevelRoutes
     val isMessagePage = currentRoute?.startsWith("messages/") == true || currentRoute?.startsWith("sos_messages/") == true
@@ -123,6 +122,7 @@ fun AppMainPage(
                             "account" -> "Account"
                             "notifications" -> "Notifications"
                             "help" -> "Help"
+                            "change_password" -> "Change Password"
                             else -> ""
                         }
                         Text(titleText, color = Color.White, fontWeight = FontWeight.Bold)
@@ -165,9 +165,8 @@ fun AppMainPage(
                     HomePageContent(
                         isOnline = isOnline,
                         onSendSosClick = {
-                            // --- THIS IS THE NEW LOGIC ---
-                            val prefs = context.getSharedPreferences("HopFogPrefs", Context.MODE_PRIVATE)
-                            val hasAgreed = prefs.getBoolean("hasAgreedToSos", false)
+                            // Check the current user's agreement status using the new SessionManager.
+                            val hasAgreed = SessionManager.hasAgreedToSos(context)
 
                             if (hasAgreed) {
                                 // If already agreed, go straight to creating the chat
@@ -185,16 +184,20 @@ fun AppMainPage(
                     )
                 }
 
+                // This is inside your NavHost in AppMainPage.kt
+
                 composable("sos_agreement") {
                     SosAgreementPage(
                         onAgreed = {
-                            // This is called after the user clicks "Agree"
-                            // Now we create the chat and navigate, replacing the agreement page in the back stack
+                            // STEP 1: Immediately save that the user has agreed.
+                            SessionManager.setHasAgreedToSos(context, true)
+
+                            // STEP 2: THEN, proceed to create the chat and navigate.
                             CoroutineScope(Dispatchers.Main).launch {
                                 val sosResponse = NetworkManager.findOrCreateSosChat(context)
                                 if (sosResponse != null) {
                                     innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}") {
-                                        // Remove the agreement page from history
+                                        // This removes the agreement page from the back stack
                                         popUpTo("sos_agreement") { inclusive = true }
                                     }
                                 }
@@ -230,11 +233,10 @@ fun AppMainPage(
                 ) { backStackEntry ->
                     val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
                     val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
-                    val context = LocalContext.current // <-- GET THE CONTEXT HERE
+                    val context = LocalContext.current
 
-                    // Load the messages for this specific chat when the screen is shown
                     LaunchedEffect(conversationId) {
-                        chatViewModel.loadMessages(context, conversationId, contactName) // <-- USE THE CONTEXT HERE
+                        chatViewModel.loadMessages(context, conversationId, contactName)
                     }
 
                     MessagePage(
@@ -279,9 +281,15 @@ fun AppMainPage(
                     )
                 }
 
-                composable("help") { /* HelpPage() */ PlaceholderPage("Help") }
-                composable("terms_of_service") { /* TermsOfServicePage() */ PlaceholderPage("Terms of Service") }
-                composable("privacy_policy") { /* PrivacyPolicyPage() */ PlaceholderPage("Privacy Policy") }
+                composable("help") {
+                    HelpPage()
+                }
+                composable("terms_of_service") {
+                    TermsOfServicePage()
+                }
+                composable("privacy_policy") {
+                    PrivacyPolicyPage()
+                }
             }
 
             ConnectionStatusPopup(

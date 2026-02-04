@@ -38,8 +38,8 @@ fun ChangePasswordPage(onPasswordChanged: () -> Unit) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Change Your Password", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        Spacer(modifier = Modifier.height(32.dp))
+//        Text("Change Your Password", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+//        Spacer(modifier = Modifier.height(32.dp))
 
         PasswordTextField(
             value = oldPassword,

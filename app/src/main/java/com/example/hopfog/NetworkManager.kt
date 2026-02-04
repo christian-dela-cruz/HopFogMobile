@@ -23,6 +23,7 @@ import io.ktor.http.parameters
 object NetworkManager {
     private const val BASE_URL = "http://192.168.254.102/hopfog_api/REST"
     //private const val BASE_URL = "http://26.166.235.63/hopfog_api/REST"
+    //private const val BASE_URL = "http://172.18.7.182/hopfog_api/REST"
 
 
     private val client = HttpClient(CIO){
@@ -91,8 +92,6 @@ object NetworkManager {
 
     suspend fun getConversations(context: Context): List<ChatConversation> {
         return try {
-            // --- REVERT THIS BACK ---
-            // It will now work because the PHP script is fixed
             client.get("$BASE_URL/get_conversations.php").body()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -169,8 +168,6 @@ object NetworkManager {
                 // Password changed successfully
                 true
             } else {
-                // --- THIS IS THE FIX ---
-                // Decode the error using our new serializable class
                 val errorResponse = response.body<GenericErrorResponse>()
                 // Use the error message from the decoded response
                 context.toast(errorResponse.error ?: "An unknown server error occurred.")

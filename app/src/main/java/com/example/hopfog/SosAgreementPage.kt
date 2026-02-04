@@ -66,9 +66,9 @@ fun SosAgreementPage(onAgreed: () -> Unit) {
 
         Button(
             onClick = {
-                // When clicked, save the agreement and then navigate
-                val prefs = context.getSharedPreferences("HopFogPrefs", Context.MODE_PRIVATE)
-                prefs.edit().putBoolean("hasAgreedToSos", true).apply()
+                // Use the new SessionManager to save the agreement for the current user.
+                SessionManager.setHasAgreedToSos(context, true)
+                // Then, tell the AppMainPage to continue.
                 onAgreed()
             },
             modifier = Modifier

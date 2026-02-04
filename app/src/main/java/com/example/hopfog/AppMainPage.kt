@@ -1,5 +1,10 @@
 package com.example.hopfog
 
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -34,14 +39,7 @@ import com.example.hopfog.ui.theme.HopFogRed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalContext
-import android.content.Context
-import androidx.compose.runtime.LaunchedEffect
 import java.util.concurrent.TimeUnit
-import android.util.Log
-import androidx.navigation.navArgument
-import android.widget.Toast
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,19 +65,28 @@ fun AppMainPage(
     val isMessagePage = currentRoute?.startsWith("messages/") == true || currentRoute?.startsWith("sos_messages/") == true
 
 
+    // --- THIS IS THE CORRECT LOCATION FOR THIS LOGIC ---
     LaunchedEffect(key1 = true) {
+        // --- START OF FIX: START THE SERVICE HERE ---
+        Log.d("AppMainPage", "Launching background services setup.")
+        val serviceIntent = Intent(context, MessageCheckService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent)
+        } else {
+            context.startService(serviceIntent)
+        }
+        // --- END OF FIX ---
+
+        // The cleanup task logic can remain here as well.
         val prefs = context.getSharedPreferences("HopFogPrefs", Context.MODE_PRIVATE)
         val lastCleanupTime = prefs.getLong("last_cleanup_time", 0L)
         val currentTime = System.currentTimeMillis()
         val oneDayInMillis = TimeUnit.DAYS.toMillis(1)
 
-        // Check if more than 24 hours have passed since the last cleanup
         if ((currentTime - lastCleanupTime) > oneDayInMillis) {
-            // It's time to run the cleanup. Launch a background task.
             launch(Dispatchers.IO) {
                 val success = NetworkManager.runMessageCleanup(context)
                 if (success) {
-                    // If successful, save the current time as the new last cleanup time.
                     prefs.edit().putLong("last_cleanup_time", currentTime).apply()
                     Log.d("Cleanup", "Successfully ran message cleanup task.")
                 }
@@ -89,7 +96,8 @@ fun AppMainPage(
         }
     }
 
-
+    // --- REMOVED FROM HERE ---
+    // The service starting code that was here has been moved up into the LaunchedEffect block.
 
     Scaffold(
         containerColor = HopFogBackground,
@@ -136,7 +144,11 @@ fun AppMainPage(
                 )
             }
             else if (isMessagePage) {
+                // Determine background color based on SOS or regular chat
+                val sosBackgroundColor = Color(0xFF5C1B1B)
+                val backgroundColor = if (currentRoute?.startsWith("sos_messages/") == true) sosBackgroundColor else HopFogBackground
                 val contactName = navBackStackEntry?.arguments?.getString("contactName") ?: "Chat"
+
                 TopAppBar(
                     title = { Text(contactName, color = Color.White, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
@@ -145,7 +157,7 @@ fun AppMainPage(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = if (currentRoute?.startsWith("sos_messages/") == true) SosBackgroundColor else HopFogBackground
+                        containerColor = backgroundColor
                     )
                 )
             }
@@ -165,11 +177,8 @@ fun AppMainPage(
                     HomePageContent(
                         isOnline = isOnline,
                         onSendSosClick = {
-                            // Check the current user's agreement status using the new SessionManager.
                             val hasAgreed = SessionManager.hasAgreedToSos(context)
-
                             if (hasAgreed) {
-                                // If already agreed, go straight to creating the chat
                                 CoroutineScope(Dispatchers.Main).launch {
                                     val sosResponse = NetworkManager.findOrCreateSosChat(context)
                                     if (sosResponse != null) {
@@ -177,30 +186,22 @@ fun AppMainPage(
                                     }
                                 }
                             } else {
-                                // If not agreed, go to the agreement page
                                 innerNavController.navigate("sos_agreement")
                             }
                         }
                     )
                 }
 
-                // This is inside your NavHost in AppMainPage.kt
-
                 composable("sos_agreement") {
                     SosAgreementPage(
                         onAgreed = {
-                            // The SosAgreementPage already told the server the user agreed.
-                            // All we need to do now is create the chat and navigate there.
                             CoroutineScope(Dispatchers.Main).launch {
                                 val sosResponse = NetworkManager.findOrCreateSosChat(context)
                                 if (sosResponse != null) {
                                     innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}") {
-                                        // This is important: it removes the agreement page from the back stack
-                                        // so the user can't press "back" and go to it again.
                                         popUpTo("sos_agreement") { inclusive = true }
                                     }
                                 } else {
-                                    // Optional: Show a toast if for some reason the chat can't be created
                                     Toast.makeText(context, "Could not create SOS chat. Please try again.", Toast.LENGTH_LONG).show()
                                 }
                             }
@@ -208,11 +209,9 @@ fun AppMainPage(
                     )
                 }
 
-
                 composable("chats_list") {
                     ChatsListPage(
                         chatViewModel = chatViewModel,
-                        // Pass the navController to handle clicks
                         onConversationClick = { conversationId, contactName ->
                             innerNavController.navigate("messages/$conversationId/$contactName")
                         }
@@ -235,16 +234,10 @@ fun AppMainPage(
                 ) { backStackEntry ->
                     val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
                     val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
-                    val context = LocalContext.current
-
                     LaunchedEffect(conversationId) {
                         chatViewModel.loadMessages(context, conversationId, contactName)
                     }
-
-                    MessagePage(
-                        chatViewModel = chatViewModel,
-                        conversationId = conversationId
-                    )
+                    MessagePage(chatViewModel = chatViewModel, conversationId = conversationId)
                 }
                 composable(
                     "sos_messages/{conversationId}/{contactName}",
@@ -255,43 +248,17 @@ fun AppMainPage(
                 ) { backStackEntry ->
                     val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
                     val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
-
-                    // Load messages for this conversation
                     LaunchedEffect(conversationId) {
                         chatViewModel.loadMessages(context, conversationId, contactName)
                     }
-
-                    SosMessagePage(
-                        chatViewModel = chatViewModel,
-                        conversationId = conversationId
-                    )
+                    SosMessagePage(chatViewModel = chatViewModel, conversationId = conversationId)
                 }
-
-                composable("notifications") { NotificationsPage() }
-
-                composable("account") {
-                    // Pass the innerNavController to the AccountPage
-                    AccountPage(userViewModel = userViewModel, navController = innerNavController)
-                }
-
-                composable("change_password") {
-                    ChangePasswordPage(
-                        onPasswordChanged = {
-                            // When the password is changed successfully, pop back
-                            innerNavController.popBackStack()
-                        }
-                    )
-                }
-
-                composable("help") {
-                    HelpPage()
-                }
-                composable("terms_of_service") {
-                    TermsOfServicePage()
-                }
-                composable("privacy_policy") {
-                    PrivacyPolicyPage()
-                }
+                composable("notifications") { PlaceholderPage(pageName = "Notifications") }
+                composable("account") { AccountPage(userViewModel = userViewModel, navController = innerNavController) }
+                composable("change_password") { ChangePasswordPage(onPasswordChanged = { innerNavController.popBackStack() }) }
+                composable("help") { HelpPage() }
+                composable("terms_of_service") { TermsOfServicePage() }
+                composable("privacy_policy") { PrivacyPolicyPage() }
             }
 
             ConnectionStatusPopup(

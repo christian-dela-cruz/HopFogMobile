@@ -256,4 +256,27 @@ object NetworkManager {
     }
 
 
+    suspend fun getNewMessages(context: Context, lastMessageId: Int): List<Message> {
+        return try {
+            // --- THIS IS THE FIX ---
+            // Get the current user's ID from the session manager
+            val currentUserId = SessionManager.getUserId(context)
+            if (currentUserId == -1) {
+                // If no user is logged in, don't even try to fetch messages.
+                return emptyList()
+            }
+
+            client.get("$BASE_URL/get_new_messages.php") {
+                parameter("last_message_id", lastMessageId)
+                parameter("user_id", currentUserId) // Add the user_id to the request
+            }.body()
+            // --- END OF FIX ---
+        } catch (e: Exception) {
+            // Don't toast here, as it's a background service
+            Log.e("NetworkManager", "Error checking for new messages: ${e.message}")
+            // Print the full stack trace to see the detailed Ktor error
+            e.printStackTrace()
+            emptyList()
+        }
+    }
 }

@@ -29,7 +29,8 @@ import com.example.hopfog.ui.theme.HopFogBlue
 @Composable
 fun ChatsListPage(
     chatViewModel: ChatViewModel,
-    onConversationClick: (conversationId: Int, contactName: String) -> Unit
+    onConversationClick: (conversationId: Int, contactName: String) -> Unit,
+    onNewMessageClick: () -> Unit
 ) {
     val context = LocalContext.current
     val conversations by chatViewModel.conversations.collectAsState()
@@ -43,7 +44,7 @@ fun ChatsListPage(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO: Start new chat */ },
+                onClick = { onNewMessageClick() },
                 containerColor = HopFogBlue,
                 contentColor = Color.Black
             ) {

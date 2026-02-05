@@ -212,9 +212,6 @@ object NetworkManager {
         }
     }
 
-// In NetworkManager.kt
-
-    // ADD THIS NEW, CORRECT FUNCTION TO YOUR NetworkManager.kt
 
     suspend fun agreeToSos(context: Context): Boolean {
         // This function will return 'true' on success and 'false' on failure.
@@ -258,25 +255,54 @@ object NetworkManager {
 
     suspend fun getNewMessages(context: Context, lastMessageId: Int): List<Message> {
         return try {
-            // --- THIS IS THE FIX ---
-            // Get the current user's ID from the session manager
+
             val currentUserId = SessionManager.getUserId(context)
             if (currentUserId == -1) {
-                // If no user is logged in, don't even try to fetch messages.
                 return emptyList()
             }
 
             client.get("$BASE_URL/get_new_messages.php") {
                 parameter("last_message_id", lastMessageId)
-                parameter("user_id", currentUserId) // Add the user_id to the request
+                parameter("user_id", currentUserId)
             }.body()
-            // --- END OF FIX ---
         } catch (e: Exception) {
-            // Don't toast here, as it's a background service
             Log.e("NetworkManager", "Error checking for new messages: ${e.message}")
-            // Print the full stack trace to see the detailed Ktor error
             e.printStackTrace()
             emptyList()
         }
     }
+
+    suspend fun getAllUsers(context: Context): List<SelectableUser> {
+        return try {
+            val currentUserId = SessionManager.getUserId(context)
+            if (currentUserId == -1) return emptyList()
+
+            client.get("$BASE_URL/get_all_users.php") {
+                parameter("user_id", currentUserId)
+            }.body()
+        } catch (e: Exception) {
+            Log.e("NetworkManager", "Error getting all users: ${e.message}")
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun findOrCreateChatWithUser(context: Context, otherUserId: Int): SosChatResponse? { // <-- FIX IS HERE
+        return try {
+            val currentUserId = SessionManager.getUserId(context)
+            if (currentUserId == -1) return null
+
+            client.post("$BASE_URL/find_or_create_chat.php") {
+                setBody(FormDataContent(Parameters.build {
+                    append("user_id_1", currentUserId.toString())
+                    append("user_id_2", otherUserId.toString())
+                }))
+            }.body()
+        } catch (e: Exception) {
+            Log.e("NetworkManager", "Error finding/creating chat: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
+
 }

@@ -76,3 +76,11 @@ data class SendMessageResponse(
 data class ErrorResponse(
     val error: String
 )
+
+@Serializable
+data class SelectableUser(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("username")
+    val username: String
+)

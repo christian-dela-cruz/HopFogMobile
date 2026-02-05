@@ -12,8 +12,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,7 +26,11 @@ import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
 @Composable
-fun HomePageContent(isOnline: Boolean, onSendSosClick: () -> Unit) {
+fun HomePageContent(
+    isOnline: Boolean,
+    onSendSosClick: () -> Unit,
+    onNewMessageClick: () -> Unit // <-- CHANGE #1: Add the new parameter here
+) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -46,8 +48,11 @@ fun HomePageContent(isOnline: Boolean, onSendSosClick: () -> Unit) {
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // --- CHANGE #2: Pass the click handler down ---
-                ActionButtons(onSendSosClick = onSendSosClick)
+                // --- CHANGE #2: Pass the new click handler down ---
+                ActionButtons(
+                    onSendSosClick = onSendSosClick,
+                    onNewMessageClick = onNewMessageClick // <-- Pass it here
+                )
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
                     text = "Nearby",
@@ -68,7 +73,10 @@ fun HomePageContent(isOnline: Boolean, onSendSosClick: () -> Unit) {
 }
 
 @Composable
-private fun ActionButtons(onSendSosClick: () -> Unit) {
+private fun ActionButtons(
+    onSendSosClick: () -> Unit,
+    onNewMessageClick: () -> Unit // <-- CHANGE #3: Accept the new parameter here
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -77,14 +85,14 @@ private fun ActionButtons(onSendSosClick: () -> Unit) {
             text = "New Message",
             icon = Icons.Default.Message,
             color = HopFogBlue,
-            onClick = { /* TODO: New message functionality */ }, // Kept as TODO
+            onClick = onNewMessageClick, // <-- CHANGE #4: Use the parameter here, replacing the TODO
             modifier = Modifier.weight(1f).aspectRatio(1f)
         )
         ActionButton(
             text = "Send SOS",
             icon = Icons.Default.Campaign,
             color = HopFogRed,
-            onClick = onSendSosClick, // Use the passed-in handler
+            onClick = onSendSosClick,
             modifier = Modifier.weight(1f).aspectRatio(1f)
         )
     }
@@ -94,11 +102,11 @@ private fun ActionButton(
     text: String,
     icon: ImageVector,
     color: Color,
-    onClick: () -> Unit, // Add this
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Button(
-        onClick = onClick, // Use it here
+        onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(containerColor = color)
@@ -144,11 +152,12 @@ private fun ReadyToHopMessage() {
     }
 }
 
+// --- Previews updated to satisfy the new parameter ---
 @Preview(name = "Home Page (Online)", showBackground = true)
 @Composable
 fun HomePageContentOnlinePreview() {
     HopFogTheme {
-        HomePageContent(isOnline = true, onSendSosClick = {}) // Pass an empty lambda for preview
+        HomePageContent(isOnline = true, onSendSosClick = {}, onNewMessageClick = {}) // <-- Added empty click handler
     }
 }
 
@@ -156,7 +165,6 @@ fun HomePageContentOnlinePreview() {
 @Composable
 fun HomePageContentOfflinePreview() {
     HopFogTheme {
-        HomePageContent(isOnline = false, onSendSosClick = {})
+        HomePageContent(isOnline = false, onSendSosClick = {}, onNewMessageClick = {}) // <-- Added empty click handler
     }
 }
-

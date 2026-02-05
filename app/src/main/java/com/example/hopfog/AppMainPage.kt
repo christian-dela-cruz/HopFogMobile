@@ -59,7 +59,7 @@ fun AppMainPage(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val topLevelRoutes = setOf("home_content", "chats_list", "settings_content")
-    val subLevelRoutes = setOf("account", "notifications", "help", "terms_of_service", "privacy_policy", "change_password")
+    val subLevelRoutes = setOf("account", "notifications", "help", "terms_of_service", "privacy_policy", "change_password", "new_message_page")
 
     val isTopLevelDestination = currentRoute in topLevelRoutes
     val isMessagePage = currentRoute?.startsWith("messages/") == true || currentRoute?.startsWith("sos_messages/") == true
@@ -131,6 +131,7 @@ fun AppMainPage(
                             "notifications" -> "Notifications"
                             "help" -> "Help"
                             "change_password" -> "Change Password"
+                            "new_message_page" -> "New Message"
                             else -> ""
                         }
                         Text(titleText, color = Color.White, fontWeight = FontWeight.Bold)
@@ -188,6 +189,9 @@ fun AppMainPage(
                             } else {
                                 innerNavController.navigate("sos_agreement")
                             }
+                        },
+                        onNewMessageClick = {
+                            innerNavController.navigate("new_message_page")
                         }
                     )
                 }
@@ -214,6 +218,9 @@ fun AppMainPage(
                         chatViewModel = chatViewModel,
                         onConversationClick = { conversationId, contactName ->
                             innerNavController.navigate("messages/$conversationId/$contactName")
+                        },
+                        onNewMessageClick = {
+                            innerNavController.navigate("new_message_page")
                         }
                     )
                 }
@@ -253,7 +260,20 @@ fun AppMainPage(
                     }
                     SosMessagePage(chatViewModel = chatViewModel, conversationId = conversationId)
                 }
-                composable("notifications") { PlaceholderPage(pageName = "Notifications") }
+                composable("new_message_page") {
+                    NewMessagePage(
+                        onUserSelected = { conversationId, contactName ->
+                            // Navigate to the message page with the new conversation details
+                            innerNavController.navigate("messages/$conversationId/$contactName") {
+                                // Remove the "New Message" page from the back stack
+                                popUpTo("new_message_page") { inclusive = true }
+                            }
+                        }
+                    )
+                }
+                composable("notifications") {
+                    NotificationsPage()
+                }
                 composable("account") { AccountPage(userViewModel = userViewModel, navController = innerNavController) }
                 composable("change_password") { ChangePasswordPage(onPasswordChanged = { innerNavController.popBackStack() }) }
                 composable("help") { HelpPage() }

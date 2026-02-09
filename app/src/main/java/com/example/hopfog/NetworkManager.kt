@@ -2,307 +2,288 @@ package com.example.hopfog
 
 import android.content.Context
 import android.widget.Toast
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
 import org.json.JSONObject
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.cookies.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.json.Json
-import io.ktor.client.call.body
-import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-import io.ktor.client.request.forms.submitForm
-import io.ktor.http.parameters
-
-
+/**
+ * MOCK (UI-only) NetworkManager
+ * ----------------------------
+ * This replaces all real backend calls with local, in-memory data so the app UI
+ * still works even with no server/Wi‑Fi.
+ *
+ * You can later re-bind to a backend by restoring your previous Ktor-based
+ * implementation or by introducing an interface + DI.
+ */
 object NetworkManager {
-    private const val BASE_URL = "http://192.168.254.102/hopfog_api/REST"
-    //private const val BASE_URL = "http://26.166.235.63/hopfog_api/REST"
-    //private const val BASE_URL = "http://172.18.7.182/hopfog_api/REST"
 
-
-    private val client = HttpClient(CIO){
-        // For automatically handling JSON
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true // Important for flexibility
-            })
-        }
-        // For automatically handling session cookies
-        install(HttpCookies)
-    }
+    // Toggle if you want to intentionally simulate failures.
+    // (Kept here so you can demo error states without a server.)
+    private const val SIMULATE_NETWORK_ERRORS = false
 
     private fun Context.toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    suspend fun registerUser(context: Context, username: String, email: String, password: String): Boolean {
-        return try {
-            val response: HttpResponse = client.post("$BASE_URL/register.php") {
-                setBody(FormDataContent(Parameters.build {
-                    append("username", username)
-                    append("email", email)
-                    append("password", password)
-                }))
-            }
-            val body = response.bodyAsText()
-            val jsonObject = JSONObject(body)
-            val success = jsonObject.optBoolean("success", false)
-            val message = jsonObject.optString("message", "An unknown error occurred.")
+    // ---- Simple in-memory "backend" store ----
+    private object MockStore {
+        private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
-            context.toast(message)
-            success
-        } catch (e: Exception) {
-            e.printStackTrace()
-            context.toast("Network error: ${e.message}")
-            false
+        // Demo users (used by NewMessagePage)
+        val users: MutableList<SelectableUser> = mutableListOf(
+            SelectableUser(id = 1, username = "HopFog Admin"),
+            SelectableUser(id = 2, username = "Barangay Desk"),
+            SelectableUser(id = 3, username = "Resident A"),
+            SelectableUser(id = 4, username = "Resident B")
+        )
+
+        // Conversations shown in ChatsListPage
+        val conversations: MutableList<ChatConversation> = mutableListOf(
+            ChatConversation(
+                conversationId = 101,
+                contactName = "HopFog Admin",
+                lastMessage = "Welcome to HopFog (UI-only demo).",
+                timestamp = timeFmt.format(Date())
+            ),
+            ChatConversation(
+                conversationId = 102,
+                contactName = "Barangay Desk",
+                lastMessage = "This is a sample conversation.",
+                timestamp = timeFmt.format(Date())
+            )
+        )
+
+        // Messages per conversation
+        private val messagesByConversation: MutableMap<Int, MutableList<Message>> = mutableMapOf(
+            101 to mutableListOf(
+                Message(
+                    messageId = 1,
+                    messageText = "Welcome to HopFog! (UI-only demo)",
+                    sentAt = timeFmt.format(Date()),
+                    senderId = 1,
+                    isFromCurrentUser = false,
+                    senderUsername = "HopFog Admin"
+                ),
+                Message(
+                    messageId = 2,
+                    messageText = "You can navigate the UI without any backend.",
+                    sentAt = timeFmt.format(Date()),
+                    senderId = 1,
+                    isFromCurrentUser = false,
+                    senderUsername = "HopFog Admin"
+                )
+            ),
+            102 to mutableListOf(
+                Message(
+                    messageId = 1,
+                    messageText = "Hello! This is a mock thread.",
+                    sentAt = timeFmt.format(Date()),
+                    senderId = 2,
+                    isFromCurrentUser = false,
+                    senderUsername = "Barangay Desk"
+                )
+            )
+        )
+
+        private var nextConversationId = 200
+
+        fun getMessages(conversationId: Int): List<Message> {
+            return messagesByConversation[conversationId]?.toList() ?: emptyList()
+        }
+
+        fun addMessage(
+            context: Context,
+            conversationId: Int,
+            messageText: String,
+            currentUserId: Int,
+            currentUsername: String
+        ): SendMessageResponse {
+            val list = messagesByConversation.getOrPut(conversationId) { mutableListOf() }
+            val nextId = (list.maxOfOrNull { it.messageId } ?: 0) + 1
+            val msg = Message(
+                messageId = nextId,
+                messageText = messageText,
+                sentAt = timeFmt.format(Date()),
+                senderId = currentUserId,
+                isFromCurrentUser = true,
+                senderUsername = currentUsername
+            )
+            list.add(msg)
+
+            // Update conversation preview
+            conversations.indexOfFirst { it.conversationId == conversationId }
+                .takeIf { it >= 0 }
+                ?.let { idx ->
+                    conversations[idx] = conversations[idx].copy(
+                        lastMessage = messageText,
+                        timestamp = timeFmt.format(Date())
+                    )
+                }
+
+            context.toast("Message sent (mock).")
+            return SendMessageResponse(success = true, message = "sent")
+        }
+
+        fun findOrCreateChatWithUser(otherUserId: Int): SosChatResponse {
+            val user = users.firstOrNull { it.id == otherUserId }
+            val name = user?.username ?: "User $otherUserId"
+
+            // If a conversation already exists with that name, reuse it.
+            val existing = conversations.firstOrNull { it.contactName == name }
+            if (existing != null) {
+                return SosChatResponse(conversationId = existing.conversationId, contactName = existing.contactName)
+            }
+
+            val newId = nextConversationId++
+            val convo = ChatConversation(
+                conversationId = newId,
+                contactName = name,
+                lastMessage = "Say hi! (mock chat)",
+                timestamp = timeFmt.format(Date())
+            )
+            conversations.add(0, convo)
+            messagesByConversation[newId] = mutableListOf(
+                Message(
+                    messageId = 1,
+                    messageText = "This chat was created offline (mock).",
+                    sentAt = timeFmt.format(Date()),
+                    senderId = otherUserId,
+                    isFromCurrentUser = false,
+                    senderUsername = name
+                )
+            )
+            return SosChatResponse(conversationId = newId, contactName = name)
         }
     }
 
-    suspend fun loginUser(context: Context, username: String, password: String): JSONObject? {
-        return try {
-            val response: HttpResponse = client.post("$BASE_URL/login.php") {
-                setBody(FormDataContent(Parameters.build {
-                    append("username", username)
-                    append("password", password)
-                }))
-            }
-            val body = response.bodyAsText()
-            val jsonObject = JSONObject(body)
-            val success = jsonObject.optBoolean("success", false)
+    // ---- Public API used by your UI ----
+    suspend fun registerUser(context: Context, username: String, email: String, password: String): Boolean {
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: registration failed.")
+            return false
+        }
+        context.toast("Registered (mock). You can now sign in.")
+        return true
+    }
 
-            if (success) {
-                // --- THIS IS THE NEW LOGIC ---
-                // 1. Get the 'user' object from the response
-                val userJson = jsonObject.getJSONObject("user")
+    suspend fun loginUser(context: Context, usernameOrEmail: String, password: String): JSONObject? {
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: login failed.")
+            return null
+        }
 
-                // 2. Extract all the user data
-                val userId = userJson.getInt("user_id")
-                val userUsername = userJson.getString("username")
-                // 3. Get the new boolean flag (default to false if not found)
-                val hasAgreed = userJson.optBoolean("has_agreed_sos", false)
+        // Minimal structure expected by UserViewModel.onLoginSuccess()
+        val userId = 999
+        val username = if (usernameOrEmail.isBlank()) "Demo User" else usernameOrEmail
+        val email = if (usernameOrEmail.contains("@")) usernameOrEmail else "demo@hopfog.local"
 
-                // 4. Save EVERYTHING to the SessionManager
-                SessionManager.saveSession(context, userId, userUsername, hasAgreed)
-                // --- END OF NEW LOGIC ---
+        // Persist session like the old backend did.
+        SessionManager.saveSession(
+            context = context,
+            userId = userId,
+            username = username,
+            hasAgreedSos = SessionManager.hasAgreedToSos(context) // keep current
+        )
 
-                jsonObject // Return the whole object to the UI to signal success
-            } else {
-                val message = jsonObject.optString("message", "An unknown error occurred.")
-                context.toast(message)
-                null // Return null on failure
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            context.toast("Network error: ${e.message}")
-            null
+        return JSONObject().apply {
+            put("success", true)
+            put("user", JSONObject().apply {
+                put("user_id", userId)
+                put("username", username)
+                put("email", email)
+                put("has_agreed_sos", SessionManager.hasAgreedToSos(context))
+            })
         }
     }
 
     suspend fun getConversations(context: Context): List<ChatConversation> {
-        return try {
-            client.get("$BASE_URL/get_conversations.php").body()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            context.toast("Error fetching chats: ${e.message}")
-            emptyList()
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: failed to fetch conversations.")
+            return emptyList()
         }
+        return MockStore.conversations.toList()
     }
 
     suspend fun getMessages(context: Context, conversationId: Int): List<Message> {
-        return try {
-            client.get("$BASE_URL/get_messages.php") {
-                parameter("conversation_id", conversationId)
-            }.body()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            context.toast("Error fetching messages: ${e.message}")
-            emptyList()
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: failed to fetch messages.")
+            return emptyList()
         }
+        return MockStore.getMessages(conversationId)
     }
 
     suspend fun sendMessage(context: Context, conversationId: Int, messageText: String): SendMessageResponse? {
-        return try {
-            val response: HttpResponse = client.post("$BASE_URL/send_message.php") {
-                contentType(ContentType.Application.Json)
-                setBody(SendMessageRequest(conversationId = conversationId, messageText = messageText))
-            }
-
-            // Check if the HTTP status code indicates success (2xx)
-            if (response.status.isSuccess()) {
-                response.body<SendMessageResponse>()
-            } else {
-                // If the server returned an error code (like 429), try to parse the error body
-                val errorBody = response.body<ErrorResponse>()
-                context.toast(errorBody.error)
-                null // Indicate failure
-            }
-        } catch (e: Exception) {
-            Log.e("NetworkManager", "Exception in sendMessage: ${e.message}")
-            context.toast("Network request failed.")
-            null
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: message not sent.")
+            return null
         }
+
+        val currentUserId = SessionManager.getUserId(context).takeIf { it != -1 } ?: 999
+        val currentUsername = SessionManager.getUsername(context).ifBlank { "Demo User" }
+        return MockStore.addMessage(context, conversationId, messageText, currentUserId, currentUsername)
     }
 
     suspend fun findOrCreateSosChat(context: Context): SosChatResponse? {
-        return try {
-            val response: HttpResponse = client.post("$BASE_URL/create_sos_chat.php")
-
-            if (response.status == HttpStatusCode.OK) {
-                response.body<SosChatResponse>()
-            } else {
-                val errorBody = response.bodyAsText()
-                Log.e("NetworkManager", "Failed to create SOS chat: $errorBody")
-                context.toast("Failed to start SOS chat. See logs.")
-                null
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            context.toast("Network error starting SOS chat: ${e.message}")
-            null
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: failed to start SOS chat.")
+            return null
         }
+        // Reserve a consistent SOS conversation ID.
+        val existing = MockStore.conversations.firstOrNull { it.contactName == "SOS" }
+        if (existing != null) {
+            return SosChatResponse(existing.conversationId, existing.contactName)
+        }
+
+        val convo = ChatConversation(
+            conversationId = 911,
+            contactName = "SOS",
+            lastMessage = "SOS channel (offline demo)",
+            timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+        )
+        (MockStore.conversations as MutableList).add(0, convo)
+        return SosChatResponse(conversationId = 911, contactName = "SOS")
     }
 
     suspend fun changePassword(context: Context, oldPass: String, newPass: String): Boolean {
-        return try {
-            val response: HttpResponse = client.submitForm(
-                url = "$BASE_URL/change_password.php",
-                formParameters = Parameters.build {
-                    append("old_password", oldPass)
-                    append("new_password", newPass)
-                }
-            )
-
-            if (response.status == HttpStatusCode.OK) {
-                // Password changed successfully
-                true
-            } else {
-                val errorResponse = response.body<GenericErrorResponse>()
-                // Use the error message from the decoded response
-                context.toast(errorResponse.error ?: "An unknown server error occurred.")
-                false
-            }
-        } catch (e: Exception) {
-            // This will catch serialization errors or network failures
-            Log.e("NetworkManager", "Exception in changePassword: ${e.message}")
-            e.printStackTrace()
-            context.toast("Network request failed: ${e.message}")
-            false
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: change password failed.")
+            return false
         }
+        context.toast("Password updated (mock).")
+        return true
     }
 
     suspend fun runMessageCleanup(context: Context): Boolean {
-        return try {
-            val response: HttpResponse = client.get("$BASE_URL/delete_old_messages.php")
-            // A 204 No Content response is a success.
-            if (response.status == HttpStatusCode.NoContent) {
-                true
-            } else {
-                Log.e("NetworkManager", "Cleanup failed with status: ${response.status}")
-                false
-            }
-        } catch (e: Exception) {
-            Log.e("NetworkManager", "Exception during message cleanup: ${e.message}")
-            false
-        }
+        // No-op for UI-only mode.
+        return true
     }
-
 
     suspend fun agreeToSos(context: Context): Boolean {
-        // This function will return 'true' on success and 'false' on failure.
-        return try {
-            val userId = SessionManager.getUserId(context)
-            if (userId == -1) {
-                // Cannot agree if no user is logged in.
-                return false
-            }
-
-            // Make the POST request to your new PHP script.
-            val response: HttpResponse = client.post("$BASE_URL/agree_to_sos.php") {
-                contentType(ContentType.Application.Json) // Let the server know we're sending JSON
-                setBody(mapOf("user_id" to userId)) // Send the user_id in the body
-            }
-
-            // Check the response from the server.
-            if (response.status == HttpStatusCode.OK) {
-                val body = response.bodyAsText()
-                val jsonObject = JSONObject(body)
-                val success = jsonObject.optBoolean("success", false)
-
-                if (success) {
-                    // If the database was updated, also update our local session to match.
-                    SessionManager.setHasAgreedToSos(context, true)
-                }
-                success // Return the success status (true or false).
-            } else {
-                // The server returned an error (e.g., 404, 500).
-                context.toast("Server error: ${response.status.value}")
-                false
-            }
-        } catch (e: Exception) {
-            // A network error occurred.
-            e.printStackTrace()
-            context.toast("Network error agreeing to SOS: ${e.message}")
-            false
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: failed to update SOS agreement.")
+            return false
         }
+        SessionManager.setHasAgreedToSos(context, true)
+        context.toast("SOS agreement saved (mock).")
+        return true
     }
 
-
     suspend fun getNewMessages(context: Context, lastMessageId: Int): List<Message> {
-        return try {
-
-            val currentUserId = SessionManager.getUserId(context)
-            if (currentUserId == -1) {
-                return emptyList()
-            }
-
-            client.get("$BASE_URL/get_new_messages.php") {
-                parameter("last_message_id", lastMessageId)
-                parameter("user_id", currentUserId)
-            }.body()
-        } catch (e: Exception) {
-            Log.e("NetworkManager", "Error checking for new messages: ${e.message}")
-            e.printStackTrace()
-            emptyList()
-        }
+        // No push/polling in UI-only mode; keep service quiet.
+        return emptyList()
     }
 
     suspend fun getAllUsers(context: Context): List<SelectableUser> {
-        return try {
-            val currentUserId = SessionManager.getUserId(context)
-            if (currentUserId == -1) return emptyList()
-
-            client.get("$BASE_URL/get_all_users.php") {
-                parameter("user_id", currentUserId)
-            }.body()
-        } catch (e: Exception) {
-            Log.e("NetworkManager", "Error getting all users: ${e.message}")
-            e.printStackTrace()
-            emptyList()
-        }
+        // In a real backend this would exclude the current user.
+        return MockStore.users.toList()
     }
 
-    suspend fun findOrCreateChatWithUser(context: Context, otherUserId: Int): SosChatResponse? { // <-- FIX IS HERE
-        return try {
-            val currentUserId = SessionManager.getUserId(context)
-            if (currentUserId == -1) return null
-
-            client.post("$BASE_URL/find_or_create_chat.php") {
-                setBody(FormDataContent(Parameters.build {
-                    append("user_id_1", currentUserId.toString())
-                    append("user_id_2", otherUserId.toString())
-                }))
-            }.body()
-        } catch (e: Exception) {
-            Log.e("NetworkManager", "Error finding/creating chat: ${e.message}")
-            e.printStackTrace()
-            null
+    suspend fun findOrCreateChatWithUser(context: Context, otherUserId: Int): SosChatResponse? {
+        if (SIMULATE_NETWORK_ERRORS) {
+            context.toast("Mock: failed to create chat.")
+            return null
         }
+        return MockStore.findOrCreateChatWithUser(otherUserId)
     }
-
 }

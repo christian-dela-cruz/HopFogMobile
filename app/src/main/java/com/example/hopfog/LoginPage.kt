@@ -121,18 +121,23 @@ fun LoginPage(
 
             Button(
                 onClick = {
-                    if (email.isBlank() || password.isBlank()) {
-                        Toast.makeText(context, "Please enter username and password.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        coroutineScope.launch {
-                            val resultJson = NetworkManager.loginUser(context, email, password)
-                            if (resultJson != null) {
-                                userViewModel.onLoginSuccess(resultJson)
-                                onLoginClicked()
-                            }
-                        }
-                    }
-                },
+                    onLoginClicked()
+                          },
+
+
+//                onClick = {
+//                    if (email.isBlank() || password.isBlank()) {
+//                        Toast.makeText(context, "Please enter username and password.", Toast.LENGTH_SHORT).show()
+//                    } else {
+//                        coroutineScope.launch {
+//                            val resultJson = NetworkManager.loginUser(context, email, password)
+//                            if (resultJson != null) {
+//                                userViewModel.onLoginSuccess(resultJson)
+//                                onLoginClicked()
+//                            }
+//                        }
+//                    }
+//                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

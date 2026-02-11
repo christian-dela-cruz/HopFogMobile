@@ -41,6 +41,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
+// --- BLUETOOTH ---
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +56,7 @@ fun AppMainPage(
     val chatViewModel: ChatViewModel = viewModel()
     val context = LocalContext.current
 
-    var isOnline by remember { mutableStateOf(true) }
+    var isOnline by remember { mutableStateOf(false) } // Default to offline
     var showStatusPopup by remember { mutableStateOf(false) }
 
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -64,10 +68,28 @@ fun AppMainPage(
     val isTopLevelDestination = currentRoute in topLevelRoutes
     val isMessagePage = currentRoute?.startsWith("messages/") == true || currentRoute?.startsWith("sos_messages/") == true
 
+    // --- BLE PERMISSION LAUNCHER ---
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[Manifest.permission.BLUETOOTH_CONNECT] == true &&
+            permissions[Manifest.permission.BLUETOOTH_SCAN] == true) {
+            Log.d("AppMainPage", "BLE Permissions Granted")
+            isOnline = true // Go online now that we have permission
+            if (BleManager.initialize(context)) {
+                // Now we can start scanning
+                BleManager.startBleScan(context)
+            }
+        } else {
+            Log.e("AppMainPage", "BLE Permissions Denied")
+            isOnline = false // Ensure we stay offline
+            Toast.makeText(context, "Bluetooth permissions are required for off-grid messaging.", Toast.LENGTH_LONG).show()
+        }
+    }
 
-    // --- THIS IS THE CORRECT LOCATION FOR THIS LOGIC ---
+    // --- Regular LaunchedEffect for other tasks ---
     LaunchedEffect(key1 = true) {
-        // --- START OF FIX: START THE SERVICE HERE ---
+        // Start MessageCheckService
         Log.d("AppMainPage", "Launching background services setup.")
         val serviceIntent = Intent(context, MessageCheckService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -75,29 +97,23 @@ fun AppMainPage(
         } else {
             context.startService(serviceIntent)
         }
-        // --- END OF FIX ---
 
-        // The cleanup task logic can remain here as well.
+        // Message cleanup task
         val prefs = context.getSharedPreferences("HopFogPrefs", Context.MODE_PRIVATE)
         val lastCleanupTime = prefs.getLong("last_cleanup_time", 0L)
         val currentTime = System.currentTimeMillis()
-        val oneDayInMillis = TimeUnit.DAYS.toMillis(1)
-
-        if ((currentTime - lastCleanupTime) > oneDayInMillis) {
+        if ((currentTime - lastCleanupTime) > TimeUnit.DAYS.toMillis(1)) {
             launch(Dispatchers.IO) {
-                val success = NetworkManager.runMessageCleanup(context)
-                if (success) {
+                if (NetworkManager.runMessageCleanup(context)) {
                     prefs.edit().putLong("last_cleanup_time", currentTime).apply()
                     Log.d("Cleanup", "Successfully ran message cleanup task.")
                 }
             }
-        } else {
-            Log.d("Cleanup", "Not time for cleanup yet.")
         }
     }
 
-    // --- REMOVED FROM HERE ---
-    // The service starting code that was here has been moved up into the LaunchedEffect block.
+    val bleConnectionState by BleManager.connectionState.collectAsState()
+
 
     Scaffold(
         containerColor = HopFogBackground,
@@ -105,15 +121,50 @@ fun AppMainPage(
             if (isTopLevelDestination) {
                 CenterAlignedTopAppBar(
                     title = { Text("HopFog", fontWeight = FontWeight.Bold, fontSize = 32.sp) },
+                    // --- MODIFICATION: ADD BLE STATUS AS NAVIGATION ICON ---
+                    navigationIcon = {
+                        Text(
+                            text = bleConnectionState,
+                            fontSize = 12.sp,
+                            color = if (bleConnectionState == "Connected") HopFogGreen else Color.Gray,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    },
                     actions = {
+                        // --- MODIFICATION: UPDATE ONCLICK AND ADD NEW BUTTON ---
                         IconButton(onClick = {
-                            isOnline = !isOnline
+                            if (!isOnline) {
+                                val permissionsToRequest = arrayOf(
+                                    Manifest.permission.BLUETOOTH_CONNECT,
+                                    Manifest.permission.BLUETOOTH_SCAN,
+                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                )
+                                permissionLauncher.launch(permissionsToRequest)
+                            } else {
+                                isOnline = false
+                                BleManager.stopBleScan()
+                            }
                             showStatusPopup = true
                         }) {
                             Icon(
                                 imageVector = if (isOnline) Icons.Default.Sensors else Icons.Default.SensorsOff,
                                 contentDescription = "Connection Status",
                                 tint = if (isOnline) HopFogGreen else HopFogRed
+                            )
+                        }
+
+                        // NEW BLE Scan Button
+                        IconButton(onClick = {
+                            if (BleManager.initialize(context)) {
+                                BleManager.startBleScan(context)
+                            } else {
+                                Toast.makeText(context, "Bluetooth is not enabled or supported.", Toast.LENGTH_SHORT).show()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.BluetoothSearching,
+                                contentDescription = "Scan for BLE Devices",
+                                tint = Color.White
                             )
                         }
                     },

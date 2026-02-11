@@ -1,5 +1,6 @@
 package com.example.hopfog
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hopfog.ui.theme.HopFogBlue
+// import kotlinx.coroutines.launch
 
 @Composable
 fun MessagePage(
@@ -29,17 +31,21 @@ fun MessagePage(
     val listState = rememberLazyListState()
     val context = LocalContext.current
 
-    // --- NEW: Get cooldown state from ViewModel ---
-    val cooldownState by chatViewModel.cooldownState.collectAsState()
-    val isSendingEnabled = cooldownState is CooldownState.Ready
+    // --- We can comment out the cooldown logic for now, as BLE sending doesn't have a cooldown yet ---
+    // val cooldownState by chatViewModel.cooldownState.collectAsState()
+    // val isSendingEnabled = cooldownState is CooldownState.Ready
+    val isSendingEnabled = true // For BLE, we'll just enable it by default
     // ---
 
-    // This makes sure the timer is cancelled when you navigate away from this screen
+    // --- Cooldown logic is commented out ---
+    /*
     DisposableEffect(Unit) {
         onDispose {
             chatViewModel.cancelCooldown()
         }
     }
+    */
+    // ---
 
     // Scroll to the bottom when new messages arrive
     LaunchedEffect(messages) {
@@ -51,13 +57,11 @@ fun MessagePage(
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
-            // Use the new MessageInput composable
             MessageInput(
-                onSendMessage = { messageText ->
-                    chatViewModel.sendMessage(context, conversationId, messageText)
-                },
+                // The onSendMessage lambda from the ViewModel is no longer used by the input field
+                onSendMessage = { /* chatViewModel.sendMessage(context, conversationId, it) */ },
                 isEnabled = isSendingEnabled,
-                cooldownSeconds = (cooldownState as? CooldownState.CoolingDown)?.secondsRemaining ?: 0
+                cooldownSeconds = 0 // (cooldownState as? CooldownState.CoolingDown)?.secondsRemaining ?: 0
             )
         }
     ) { padding ->
@@ -75,11 +79,13 @@ fun MessagePage(
 
 @Composable
 fun MessageInput(
-    onSendMessage: (String) -> Unit,
+    onSendMessage: (String) -> Unit, // This parameter is no longer directly used but kept for structure
     isEnabled: Boolean,
     cooldownSeconds: Int
 ) {
     var text by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
 
     Row(
         modifier = Modifier.padding(8.dp),
@@ -103,15 +109,29 @@ fun MessageInput(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // This is now a standard Button to easily show the countdown text
         Button(
             onClick = {
                 if (text.isNotBlank()) {
+                    // --- THIS IS THE PRIMARY CHANGE ---
+
+                    // 1. Call BleManager directly to send the message
+                    val success = BleManager.sendMessage(text)
+
+                    // 2. Provide user feedback
+                    if (success) {
+                        Toast.makeText(context, "Message sent via BLE", Toast.LENGTH_SHORT).show()
+                        text = "" // Clear input after sending
+                    } else {
+                        Toast.makeText(context, "Failed to send: Not connected via BLE.", Toast.LENGTH_LONG).show()
+                    }
+
+                    /*
                     onSendMessage(text)
                     text = "" // Clear input after sending
+                    */
                 }
             },
-            enabled = isEnabled && text.isNotBlank(),
+            enabled = isEnabled && text.isNotBlank(), // Cooldown is disabled for now, so isEnabled is always true
             shape = CircleShape,
             modifier = Modifier.size(50.dp),
             contentPadding = PaddingValues(0.dp)
@@ -119,7 +139,6 @@ fun MessageInput(
             if (isEnabled) {
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
             } else {
-                // If on cooldown, show the remaining seconds
                 Text(text = "$cooldownSeconds")
             }
         }

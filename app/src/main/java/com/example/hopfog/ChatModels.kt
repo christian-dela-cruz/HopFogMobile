@@ -25,20 +25,29 @@ data class ChatConversation(
     val timestamp: String?
 )
 
-@Serializable
+//@Serializable
+//data class Message(
+//    @SerialName("message_id")
+//    val messageId: Int,
+//    @SerialName("message_text")
+//    val messageText: String,
+//    @SerialName("sent_at")
+//    val sentAt: String,
+//    @SerialName("sender_id")
+//    val senderId: Int,
+//    @SerialName("is_from_current_user")
+//    val isFromCurrentUser: Boolean,
+//    @SerialName("sender_username")
+//    val senderUsername: String
+//)
+
 data class Message(
-    @SerialName("message_id")
     val messageId: Int,
-    @SerialName("message_text")
+    val senderUsername: String,
     val messageText: String,
-    @SerialName("sent_at")
-    val sentAt: String,
-    @SerialName("sender_id")
-    val senderId: Int,
-    @SerialName("is_from_current_user")
+    val timestamp: String,
     val isFromCurrentUser: Boolean,
-    @SerialName("sender_username")
-    val senderUsername: String
+    var status: String = "delivered" // Add this field. "delivered", "sending", "failed"
 )
 
 @Serializable
@@ -84,3 +93,4 @@ data class SelectableUser(
     @SerialName("username")
     val username: String
 )
+

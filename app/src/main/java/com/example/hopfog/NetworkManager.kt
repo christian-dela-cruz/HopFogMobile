@@ -9,28 +9,19 @@ import java.util.Locale
 
 /**
  * MOCK (UI-only) NetworkManager
- * ----------------------------
- * This replaces all real backend calls with local, in-memory data so the app UI
- * still works even with no server/Wi‑Fi.
- *
- * You can later re-bind to a backend by restoring your previous Ktor-based
- * implementation or by introducing an interface + DI.
+ * This replaces all real backend calls with local, in-memory data.
  */
 object NetworkManager {
 
-    // Toggle if you want to intentionally simulate failures.
-    // (Kept here so you can demo error states without a server.)
     private const val SIMULATE_NETWORK_ERRORS = false
 
     private fun Context.toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    // ---- Simple in-memory "backend" store ----
     private object MockStore {
         private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
-        // Demo users (used by NewMessagePage)
         val users: MutableList<SelectableUser> = mutableListOf(
             SelectableUser(id = 1, username = "HopFog Admin"),
             SelectableUser(id = 2, username = "Barangay Desk"),
@@ -38,7 +29,6 @@ object NetworkManager {
             SelectableUser(id = 4, username = "Resident B")
         )
 
-        // Conversations shown in ChatsListPage
         val conversations: MutableList<ChatConversation> = mutableListOf(
             ChatConversation(
                 conversationId = 101,
@@ -54,34 +44,33 @@ object NetworkManager {
             )
         )
 
-        // Messages per conversation
         private val messagesByConversation: MutableMap<Int, MutableList<Message>> = mutableMapOf(
             101 to mutableListOf(
                 Message(
                     messageId = 1,
                     messageText = "Welcome to HopFog! (UI-only demo)",
-                    sentAt = timeFmt.format(Date()),
-                    senderId = 1,
+                    timestamp = timeFmt.format(Date()), // Use timestamp instead of sentAt
                     isFromCurrentUser = false,
-                    senderUsername = "HopFog Admin"
+                    senderUsername = "HopFog Admin",
+                    status = "delivered" // FIXED: Add status field
                 ),
                 Message(
                     messageId = 2,
                     messageText = "You can navigate the UI without any backend.",
-                    sentAt = timeFmt.format(Date()),
-                    senderId = 1,
+                    timestamp = timeFmt.format(Date()), // Use timestamp instead of sentAt
                     isFromCurrentUser = false,
-                    senderUsername = "HopFog Admin"
+                    senderUsername = "HopFog Admin",
+                    status = "delivered" // FIXED: Add status field
                 )
             ),
             102 to mutableListOf(
                 Message(
                     messageId = 1,
                     messageText = "Hello! This is a mock thread.",
-                    sentAt = timeFmt.format(Date()),
-                    senderId = 2,
+                    timestamp = timeFmt.format(Date()), // Use timestamp instead of sentAt
                     isFromCurrentUser = false,
-                    senderUsername = "Barangay Desk"
+                    senderUsername = "Barangay Desk",
+                    status = "delivered" // FIXED: Add status field
                 )
             )
         )
@@ -96,7 +85,6 @@ object NetworkManager {
             context: Context,
             conversationId: Int,
             messageText: String,
-            currentUserId: Int,
             currentUsername: String
         ): SendMessageResponse {
             val list = messagesByConversation.getOrPut(conversationId) { mutableListOf() }
@@ -104,14 +92,13 @@ object NetworkManager {
             val msg = Message(
                 messageId = nextId,
                 messageText = messageText,
-                sentAt = timeFmt.format(Date()),
-                senderId = currentUserId,
+                timestamp = timeFmt.format(Date()), // Use timestamp instead of sentAt
                 isFromCurrentUser = true,
-                senderUsername = currentUsername
+                senderUsername = currentUsername,
+                status = "delivered" // FIXED: Add status field
             )
             list.add(msg)
 
-            // Update conversation preview
             conversations.indexOfFirst { it.conversationId == conversationId }
                 .takeIf { it >= 0 }
                 ?.let { idx ->
@@ -129,7 +116,6 @@ object NetworkManager {
             val user = users.firstOrNull { it.id == otherUserId }
             val name = user?.username ?: "User $otherUserId"
 
-            // If a conversation already exists with that name, reuse it.
             val existing = conversations.firstOrNull { it.contactName == name }
             if (existing != null) {
                 return SosChatResponse(conversationId = existing.conversationId, contactName = existing.contactName)
@@ -147,17 +133,16 @@ object NetworkManager {
                 Message(
                     messageId = 1,
                     messageText = "This chat was created offline (mock).",
-                    sentAt = timeFmt.format(Date()),
-                    senderId = otherUserId,
+                    timestamp = timeFmt.format(Date()), // Use timestamp instead of sentAt
                     isFromCurrentUser = false,
-                    senderUsername = name
+                    senderUsername = name,
+                    status = "delivered" // FIXED: Add status field
                 )
             )
             return SosChatResponse(conversationId = newId, contactName = name)
         }
     }
 
-    // ---- Public API used by your UI ----
     suspend fun registerUser(context: Context, username: String, email: String, password: String): Boolean {
         if (SIMULATE_NETWORK_ERRORS) {
             context.toast("Mock: registration failed.")
@@ -172,26 +157,19 @@ object NetworkManager {
             context.toast("Mock: login failed.")
             return null
         }
-
-        // Minimal structure expected by UserViewModel.onLoginSuccess()
         val userId = 999
         val username = if (usernameOrEmail.isBlank()) "Demo User" else usernameOrEmail
-        val email = if (usernameOrEmail.contains("@")) usernameOrEmail else "demo@hopfog.local"
-
-        // Persist session like the old backend did.
         SessionManager.saveSession(
             context = context,
             userId = userId,
             username = username,
-            hasAgreedSos = SessionManager.hasAgreedToSos(context) // keep current
+            hasAgreedSos = SessionManager.hasAgreedToSos(context)
         )
-
         return JSONObject().apply {
             put("success", true)
             put("user", JSONObject().apply {
                 put("user_id", userId)
                 put("username", username)
-                put("email", email)
                 put("has_agreed_sos", SessionManager.hasAgreedToSos(context))
             })
         }
@@ -218,10 +196,8 @@ object NetworkManager {
             context.toast("Mock: message not sent.")
             return null
         }
-
-        val currentUserId = SessionManager.getUserId(context).takeIf { it != -1 } ?: 999
         val currentUsername = SessionManager.getUsername(context).ifBlank { "Demo User" }
-        return MockStore.addMessage(context, conversationId, messageText, currentUserId, currentUsername)
+        return MockStore.addMessage(context, conversationId, messageText, currentUsername)
     }
 
     suspend fun findOrCreateSosChat(context: Context): SosChatResponse? {
@@ -229,12 +205,10 @@ object NetworkManager {
             context.toast("Mock: failed to start SOS chat.")
             return null
         }
-        // Reserve a consistent SOS conversation ID.
         val existing = MockStore.conversations.firstOrNull { it.contactName == "SOS" }
         if (existing != null) {
             return SosChatResponse(existing.conversationId, existing.contactName)
         }
-
         val convo = ChatConversation(
             conversationId = 911,
             contactName = "SOS",
@@ -255,7 +229,6 @@ object NetworkManager {
     }
 
     suspend fun runMessageCleanup(context: Context): Boolean {
-        // No-op for UI-only mode.
         return true
     }
 
@@ -270,12 +243,10 @@ object NetworkManager {
     }
 
     suspend fun getNewMessages(context: Context, lastMessageId: Int): List<Message> {
-        // No push/polling in UI-only mode; keep service quiet.
         return emptyList()
     }
 
     suspend fun getAllUsers(context: Context): List<SelectableUser> {
-        // In a real backend this would exclude the current user.
         return MockStore.users.toList()
     }
 

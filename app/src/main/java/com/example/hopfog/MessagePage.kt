@@ -20,7 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hopfog.ui.theme.HopFogBlue
-// import kotlinx.coroutines.launch
+import com.google.gson.Gson
 
 @Composable
 fun MessagePage(
@@ -29,23 +29,6 @@ fun MessagePage(
 ) {
     val messages by chatViewModel.messages.collectAsState()
     val listState = rememberLazyListState()
-    val context = LocalContext.current
-
-    // --- We can comment out the cooldown logic for now, as BLE sending doesn't have a cooldown yet ---
-    // val cooldownState by chatViewModel.cooldownState.collectAsState()
-    // val isSendingEnabled = cooldownState is CooldownState.Ready
-    val isSendingEnabled = true // For BLE, we'll just enable it by default
-    // ---
-
-    // --- Cooldown logic is commented out ---
-    /*
-    DisposableEffect(Unit) {
-        onDispose {
-            chatViewModel.cancelCooldown()
-        }
-    }
-    */
-    // ---
 
     // Scroll to the bottom when new messages arrive
     LaunchedEffect(messages) {
@@ -57,12 +40,8 @@ fun MessagePage(
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
-            MessageInput(
-                // The onSendMessage lambda from the ViewModel is no longer used by the input field
-                onSendMessage = { /* chatViewModel.sendMessage(context, conversationId, it) */ },
-                isEnabled = isSendingEnabled,
-                cooldownSeconds = 0 // (cooldownState as? CooldownState.CoolingDown)?.secondsRemaining ?: 0
-            )
+            // Pass the ChatViewModel to the MessageInput
+            MessageInput(chatViewModel = chatViewModel)
         }
     ) { padding ->
         LazyColumn(
@@ -79,12 +58,10 @@ fun MessagePage(
 
 @Composable
 fun MessageInput(
-    onSendMessage: (String) -> Unit, // This parameter is no longer directly used but kept for structure
-    isEnabled: Boolean,
-    cooldownSeconds: Int
+    chatViewModel: ChatViewModel // Use the ViewModel to add messages to the UI
 ) {
     var text by remember { mutableStateOf("") }
-
+    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     Row(
@@ -112,34 +89,50 @@ fun MessageInput(
         Button(
             onClick = {
                 if (text.isNotBlank()) {
-                    // --- THIS IS THE PRIMARY CHANGE ---
+                    val messageContent = text
+                    isLoading = true
 
-                    // 1. Call BleManager directly to send the message
-                    val success = BleManager.sendMessage(text)
+                    // Add the message to the UI immediately with a "sending" status
+                    // This assumes your Message data class has a status field.
+                    // If not, you may need to adapt this part.
+                    chatViewModel.addProvisionalMessage(messageContent)
+                    text = "" // Clear input
 
-                    // 2. Provide user feedback
-                    if (success) {
-                        Toast.makeText(context, "Message sent via BLE", Toast.LENGTH_SHORT).show()
-                        text = "" // Clear input after sending
-                    } else {
-                        Toast.makeText(context, "Failed to send: Not connected via BLE.", Toast.LENGTH_LONG).show()
-                    }
+                    // Create JSON for the message
+                    val messageData = mapOf(
+                        "action" to "sendMessage",
+                        "text" to messageContent
+                        // You could add conversationId, senderId, etc. here
+                    )
+                    val jsonString = Gson().toJson(messageData)
 
-                    /*
-                    onSendMessage(text)
-                    text = "" // Clear input after sending
-                    */
+                    // Perform the BLE transaction
+                    BleManager.performTransaction(jsonString, object : BleTransactionCallback {
+                        override fun onTransactionSuccess(response: String) {
+                            isLoading = false
+                            // NEW: Update the message status to "delivered"
+                            chatViewModel.updateLastMessageStatus("delivered")
+                            Toast.makeText(context, "Message Delivered", Toast.LENGTH_SHORT).show()
+                        }
+
+                        override fun onTransactionFailure(error: String) {
+                            isLoading = false
+                            // NEW: Update the message status to "failed"
+                            chatViewModel.updateLastMessageStatus("failed")
+                            Toast.makeText(context, "Send Failed: $error", Toast.LENGTH_LONG).show()
+                        }
+                    })
                 }
             },
-            enabled = isEnabled && text.isNotBlank(), // Cooldown is disabled for now, so isEnabled is always true
+            enabled = !isLoading && text.isNotBlank(),
             shape = CircleShape,
             modifier = Modifier.size(50.dp),
             contentPadding = PaddingValues(0.dp)
         ) {
-            if (isEnabled) {
-                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = HopFogBlue)
             } else {
-                Text(text = "$cooldownSeconds")
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
             }
         }
     }

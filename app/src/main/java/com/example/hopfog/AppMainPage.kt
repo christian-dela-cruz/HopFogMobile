@@ -1,10 +1,13 @@
 package com.example.hopfog
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -41,11 +44,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
-// --- BLUETOOTH ---
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppMainPage(
@@ -56,7 +54,9 @@ fun AppMainPage(
     val chatViewModel: ChatViewModel = viewModel()
     val context = LocalContext.current
 
-    var isOnline by remember { mutableStateOf(false) } // Default to offline
+    // --- NEW: Simplified state for permissions ---
+    // We only care if we have BLE permissions, not if we are "online".
+    var hasBlePermissions by remember { mutableStateOf(false) }
     var showStatusPopup by remember { mutableStateOf(false) }
 
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -72,24 +72,36 @@ fun AppMainPage(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        if (permissions[Manifest.permission.BLUETOOTH_CONNECT] == true &&
-            permissions[Manifest.permission.BLUETOOTH_SCAN] == true) {
+        val granted = permissions[Manifest.permission.BLUETOOTH_CONNECT] == true &&
+                permissions[Manifest.permission.BLUETOOTH_SCAN] == true
+
+        hasBlePermissions = granted
+        if (granted) {
             Log.d("AppMainPage", "BLE Permissions Granted")
-            isOnline = true // Go online now that we have permission
-            if (BleManager.initialize(context)) {
-                // Now we can start scanning
-                BleManager.startBleScan(context)
-            }
+            Toast.makeText(context, "Bluetooth permissions granted. Off-grid mode is available.", Toast.LENGTH_SHORT).show()
         } else {
             Log.e("AppMainPage", "BLE Permissions Denied")
-            isOnline = false // Ensure we stay offline
             Toast.makeText(context, "Bluetooth permissions are required for off-grid messaging.", Toast.LENGTH_LONG).show()
         }
     }
 
-    // --- Regular LaunchedEffect for other tasks ---
+    // --- Initial check for permissions ---
+    LaunchedEffect(Unit) {
+        val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        permissionLauncher.launch(permissionsToRequest)
+    }
+
+    // This LaunchedEffect for services can remain as it is
     LaunchedEffect(key1 = true) {
-        // Start MessageCheckService
+        // ... (Your existing code for MessageCheckService and cleanup)
         Log.d("AppMainPage", "Launching background services setup.")
         val serviceIntent = Intent(context, MessageCheckService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -97,23 +109,7 @@ fun AppMainPage(
         } else {
             context.startService(serviceIntent)
         }
-
-        // Message cleanup task
-        val prefs = context.getSharedPreferences("HopFogPrefs", Context.MODE_PRIVATE)
-        val lastCleanupTime = prefs.getLong("last_cleanup_time", 0L)
-        val currentTime = System.currentTimeMillis()
-        if ((currentTime - lastCleanupTime) > TimeUnit.DAYS.toMillis(1)) {
-            launch(Dispatchers.IO) {
-                if (NetworkManager.runMessageCleanup(context)) {
-                    prefs.edit().putLong("last_cleanup_time", currentTime).apply()
-                    Log.d("Cleanup", "Successfully ran message cleanup task.")
-                }
-            }
-        }
     }
-
-    val bleConnectionState by BleManager.connectionState.collectAsState()
-
 
     Scaffold(
         containerColor = HopFogBackground,
@@ -121,50 +117,13 @@ fun AppMainPage(
             if (isTopLevelDestination) {
                 CenterAlignedTopAppBar(
                     title = { Text("HopFog", fontWeight = FontWeight.Bold, fontSize = 32.sp) },
-                    // --- MODIFICATION: ADD BLE STATUS AS NAVIGATION ICON ---
-                    navigationIcon = {
-                        Text(
-                            text = bleConnectionState,
-                            fontSize = 12.sp,
-                            color = if (bleConnectionState == "Connected") HopFogGreen else Color.Gray,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    },
                     actions = {
-                        // --- MODIFICATION: UPDATE ONCLICK AND ADD NEW BUTTON ---
-                        IconButton(onClick = {
-                            if (!isOnline) {
-                                val permissionsToRequest = arrayOf(
-                                    Manifest.permission.BLUETOOTH_CONNECT,
-                                    Manifest.permission.BLUETOOTH_SCAN,
-                                    Manifest.permission.ACCESS_FINE_LOCATION
-                                )
-                                permissionLauncher.launch(permissionsToRequest)
-                            } else {
-                                isOnline = false
-                                BleManager.stopBleScan()
-                            }
-                            showStatusPopup = true
-                        }) {
+                        // --- SIMPLIFIED: One button to show status and request permissions if needed ---
+                        IconButton(onClick = { showStatusPopup = true }) {
                             Icon(
-                                imageVector = if (isOnline) Icons.Default.Sensors else Icons.Default.SensorsOff,
+                                imageVector = if (hasBlePermissions) Icons.Default.Sensors else Icons.Default.SensorsOff,
                                 contentDescription = "Connection Status",
-                                tint = if (isOnline) HopFogGreen else HopFogRed
-                            )
-                        }
-
-                        // NEW BLE Scan Button
-                        IconButton(onClick = {
-                            if (BleManager.initialize(context)) {
-                                BleManager.startBleScan(context)
-                            } else {
-                                Toast.makeText(context, "Bluetooth is not enabled or supported.", Toast.LENGTH_SHORT).show()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.BluetoothSearching,
-                                contentDescription = "Scan for BLE Devices",
-                                tint = Color.White
+                                tint = if (hasBlePermissions) HopFogGreen else HopFogRed
                             )
                         }
                     },
@@ -174,7 +133,8 @@ fun AppMainPage(
                         actionIconContentColor = Color.White
                     )
                 )
-            }  else if (currentRoute in subLevelRoutes) {
+            } else if (currentRoute in subLevelRoutes) {
+                // ... (This part remains the same)
                 TopAppBar(
                     title = {
                         val titleText = when(currentRoute) {
@@ -194,9 +154,8 @@ fun AppMainPage(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = HopFogBackground)
                 )
-            }
-            else if (isMessagePage) {
-                // Determine background color based on SOS or regular chat
+            } else if (isMessagePage) {
+                // ... (This part remains the same)
                 val sosBackgroundColor = Color(0xFF5C1B1B)
                 val backgroundColor = if (currentRoute?.startsWith("sos_messages/") == true) sosBackgroundColor else HopFogBackground
                 val contactName = navBackStackEntry?.arguments?.getString("contactName") ?: "Chat"
@@ -221,32 +180,20 @@ fun AppMainPage(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
+            // --- The NavHost and its composables remain largely the same ---
+            // They don't need to know about the BLE connection state.
             NavHost(
                 navController = innerNavController,
                 startDestination = "home_content",
             ) {
                 composable("home_content") {
                     HomePageContent(
-                        isOnline = isOnline,
-                        onSendSosClick = {
-                            val hasAgreed = SessionManager.hasAgreedToSos(context)
-                            if (hasAgreed) {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    val sosResponse = NetworkManager.findOrCreateSosChat(context)
-                                    if (sosResponse != null) {
-                                        innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}")
-                                    }
-                                }
-                            } else {
-                                innerNavController.navigate("sos_agreement")
-                            }
-                        },
-                        onNewMessageClick = {
-                            innerNavController.navigate("new_message_page")
-                        }
+                        isOnline = hasBlePermissions, // The "isOnline" prop now just means "can we go off-grid?"
+                        onSendSosClick = { /* ... */ },
+                        onNewMessageClick = { innerNavController.navigate("new_message_page") }
                     )
                 }
-
+                // ... (All your other composable routes)
                 composable("sos_agreement") {
                     SosAgreementPage(
                         onAgreed = {
@@ -332,51 +279,49 @@ fun AppMainPage(
                 composable("privacy_policy") { PrivacyPolicyPage() }
             }
 
+            // The ConnectionStatusPopup is updated to reflect the permission status
             ConnectionStatusPopup(
                 isVisible = showStatusPopup,
-                isOnline = isOnline,
+                hasPermissions = hasBlePermissions,
                 onDismiss = { showStatusPopup = false }
             )
         }
     }
 }
 
+// --- MODIFIED ConnectionStatusPopup ---
 @Composable
-fun ConnectionStatusPopup(isVisible: Boolean, isOnline: Boolean, onDismiss: () -> Unit) {
+fun ConnectionStatusPopup(isVisible: Boolean, hasPermissions: Boolean, onDismiss: () -> Unit) {
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(),
         exit = fadeOut(),
-        modifier = Modifier
-            .padding(top = 40.dp, start = 80.dp, end = 80.dp)
-            .fillMaxWidth()
+        modifier = Modifier.padding(top = 40.dp, start = 80.dp, end = 80.dp).fillMaxWidth()
     ) {
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
-            border = BorderStroke(2.dp, if (isOnline) HopFogGreen else HopFogRed)
+            border = BorderStroke(2.dp, if (hasPermissions) HopFogGreen else HopFogRed)
         ) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Connection Status", fontWeight = FontWeight.Bold, color = Color.Black)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    Text("Off-Grid Status", fontWeight = FontWeight.Bold, color = Color.Black)
                     IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.Default.Close, contentDescription = "Close Status", tint = Color.Black)
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("• Status: ${if (isOnline) "Connected" else "Disconnected"}", color = Color.DarkGray)
-                Text("• Access Point: ${if (isOnline) "HopFogAP1" else "None"}", color = Color.DarkGray)
+                Text("• Status: ${if (hasPermissions) "Ready" else "Permissions Needed"}", color = Color.DarkGray)
+                Text("• Mode: Transactional (On-Demand)", color = Color.DarkGray)
             }
         }
     }
 }
 
+
 @Composable
 private fun AppBottomNavigation(navController: NavController) {
+    // ... (This part remains the same)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -399,12 +344,5 @@ private fun AppBottomNavigation(navController: NavController) {
             icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
             label = { Text("Settings") }
         )
-    }
-}
-
-@Composable
-fun PlaceholderPage(pageName: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "$pageName Page", fontSize = 32.sp, color = Color.White)
     }
 }

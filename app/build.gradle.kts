@@ -67,6 +67,9 @@ dependencies {
     // Lifecycle ViewModel for Compose (Consolidated to version 2.8.0)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 
+    implementation("com.google.code.gson:gson:2.10.1")
+
+
     // Testing Libraries
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

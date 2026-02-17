@@ -19,7 +19,7 @@ object NetworkManager {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    private object MockStore {
+     object MockStore {
         private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
         val users: MutableList<SelectableUser> = mutableListOf(
@@ -157,19 +157,32 @@ object NetworkManager {
             context.toast("Mock: login failed.")
             return null
         }
-        val userId = 999
-        val username = if (usernameOrEmail.isBlank()) "Demo User" else usernameOrEmail
+
+        // Create the login JSON
+        val json = JSONObject().apply {
+            put("action", "login")
+            put("username", usernameOrEmail)
+            put("password", password)
+        }
+
+        // Send the JSON over BLE
+        BleManager.sendJson(json.toString())
+
+        // Save the session locally immediately, assuming the login will succeed.
+        // In a real app, you might wait for a success notification from the BLE device.
+        val userId = 999 // We can keep using a mock user ID
         SessionManager.saveSession(
             context = context,
             userId = userId,
-            username = username,
+            username = usernameOrEmail,
             hasAgreedSos = SessionManager.hasAgreedToSos(context)
         )
+        // Return a success response so the UI proceeds.
         return JSONObject().apply {
             put("success", true)
             put("user", JSONObject().apply {
                 put("user_id", userId)
-                put("username", username)
+                put("username", usernameOrEmail)
                 put("has_agreed_sos", SessionManager.hasAgreedToSos(context))
             })
         }
@@ -196,7 +209,23 @@ object NetworkManager {
             context.toast("Mock: message not sent.")
             return null
         }
+
+        // Get the current user's info from the local session
         val currentUsername = SessionManager.getUsername(context).ifBlank { "Demo User" }
+        val currentUserId = SessionManager.getUserId(context)
+
+        // Create the sendMessage JSON
+        val json = JSONObject().apply {
+            put("action", "sendMessage")
+            put("text", messageText)
+            put("sender_username", currentUsername)
+            put("sender_id", currentUserId)
+        }
+
+        // Send the JSON over BLE
+        BleManager.sendJson(json.toString())
+
+        // Still add the message to the local mock store so it appears in the UI instantly.
         return MockStore.addMessage(context, conversationId, messageText, currentUsername)
     }
 

@@ -29,7 +29,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogBlue
 import com.example.hopfog.ui.theme.HopFogTheme
-import com.google.gson.Gson
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun LoginPage(
@@ -44,7 +45,9 @@ fun LoginPage(
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // --- NEW: Add a permission launcher directly in LoginPage ---
+    // THE FIX: Get a coroutine scope tied to the Composable's lifecycle.
+    val scope = rememberCoroutineScope()
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -56,7 +59,6 @@ fun LoginPage(
         }
     }
 
-    // Initialize BleManager when the page is composed
     LaunchedEffect(Unit) {
         BleManager.initialize(context)
     }
@@ -68,7 +70,6 @@ fun LoginPage(
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ... (Your UI code for titles, text fields, etc. is correct)
             Text(text = "HopFog", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 40.dp))
             Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 24.dp))
             Text(text = "Sign In", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.align(Alignment.Start))
@@ -76,7 +77,6 @@ fun LoginPage(
 
             OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email or Username") }, leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(16.dp), colors = authTextFieldColors())
             Spacer(modifier = Modifier.height(16.dp))
-
             OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = PasswordVisualTransformation(), shape = RoundedCornerShape(16.dp), colors = authTextFieldColors())
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -88,51 +88,40 @@ fun LoginPage(
             }
             Spacer(modifier = Modifier.height(32.dp))
 
-
-            // ########## FULLY CORRECTED BUTTON LOGIC ##########
             Button(
                 onClick = {
                     if (email.isBlank() || password.isBlank()) {
                         Toast.makeText(context, "Please enter username and password.", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-
-                    // --- [1] THE PERMISSION GUARD ---
-                    // Check for permissions right here, right now.
                     if (!BleManager.hasPermissions(context)) {
                         val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
                         } else {
                             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
                         }
-                        // If permissions are missing, request them and STOP.
                         permissionLauncher.launch(permissionsToRequest)
-                        Toast.makeText(context, "Requesting Bluetooth permissions...", Toast.LENGTH_SHORT).show()
-                        return@Button // Stop the login process
+                        return@Button
                     }
-                    // --- END OF GUARD ---
 
-                    // [2] If permissions are present, proceed with the transaction.
                     isLoading = true
-                    val loginData = mapOf("action" to "login", "username" to email, "password" to password)
-                    val jsonString = Gson().toJson(loginData)
 
-                    BleManager.performTransaction(jsonString, object : BleTransactionCallback {
-                        override fun onTransactionSuccess(response: String) {
-                            isLoading = false
-                            if (response.contains("Login OK", ignoreCase = true)) {
-                                Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
-                                onLoginClicked()
-                            } else {
-                                Toast.makeText(context, "Login Failed: $response", Toast.LENGTH_LONG).show()
-                            }
-                        }
+                    // THE FIX: Use the scope to launch the coroutine.
+                    scope.launch {
+                        // We call the NetworkManager. It pretends to log in and saves the session.
+                        val response = NetworkManager.loginUser(context, email, password)
+                        isLoading = false
 
-                        override fun onTransactionFailure(error: String) {
-                            isLoading = false
-                            Toast.makeText(context, "Login Error: $error", Toast.LENGTH_LONG).show()
+                        // The response is now a mock success from NetworkManager.
+                        // We trust it and navigate immediately.
+                        if (response != null && response.getBoolean("success")) {
+                            Toast.makeText(context, "Login details saved.", Toast.LENGTH_SHORT).show()
+                            userViewModel.onLoginSuccess(response)
+                            onLoginClicked() // Navigate to AppMainPage
+                        } else {
+                            Toast.makeText(context, "Login Failed", Toast.LENGTH_LONG).show()
                         }
-                    })
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -147,10 +136,8 @@ fun LoginPage(
                     Text("Sign In", color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            // #############################################
 
             Spacer(modifier = Modifier.weight(1f))
-            // ... (rest of your UI)
             val annotatedText = buildAnnotatedString {
                 withStyle(style = SpanStyle(color = Color.LightGray)) { append("Don't have account? ") }
                 pushStringAnnotation(tag = "SignUp", annotation = "SignUp")
@@ -161,6 +148,19 @@ fun LoginPage(
         }
     }
 }
+
+//@Composable
+//fun authTextFieldColors() = OutlinedTextFieldDefaults.colors(
+//    focusedBorderColor = HopFogBlue,
+//    unfocusedBorderColor = Color.Gray,
+//    focusedLabelColor = HopFogBlue,
+//    unfocusedLabelColor = Color.Gray,
+//    focusedTextColor = Color.White,
+//    unfocusedTextColor = Color.White,
+//    cursorColor = HopFogBlue,
+//    focusedLeadingIconColor = HopFogBlue,
+//    unfocusedLeadingIconColor = Color.Gray
+//)
 
 
 @Preview(showBackground = true)

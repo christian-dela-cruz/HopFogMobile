@@ -1,6 +1,10 @@
 package com.example.hopfog
 
+import android.Manifest
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,15 +24,51 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hopfog.ui.theme.HopFogBlue
-import com.google.gson.Gson
+import androidx.compose.material3.ExperimentalMaterial3Api
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagePage(
     chatViewModel: ChatViewModel,
-    conversationId: Int
+    conversationId: Int, // We still need this to load initial mock data
+    contactName: String, // We need this to set the title
 ) {
     val messages by chatViewModel.messages.collectAsState()
+    val connectionStatus by chatViewModel.connectionStatus.collectAsState()
     val listState = rememberLazyListState()
+    val context = LocalContext.current
+
+    // --- NEW: Connection Lifecycle Management ---
+    LaunchedEffect(key1 = Unit) {
+        // When the page first loads, tell the ViewModel to prepare the chat
+        // and connect to the BLE device.
+        chatViewModel.prepareChat(conversationId, contactName)
+        chatViewModel.connectToHub()
+    }
+
+    // NEW: Ensure we disconnect when the user leaves the page
+    DisposableEffect(key1 = Unit) {
+        onDispose {
+            chatViewModel.disconnectFromHub()
+        }
+    }
+
+    // NEW: Show a toast when connection status changes
+    LaunchedEffect(connectionStatus) {
+        if (connectionStatus is ConnectionStatus.Error) {
+            Toast.makeText(context, (connectionStatus as ConnectionStatus.Error).message, Toast.LENGTH_LONG).show()
+        } else if (connectionStatus is ConnectionStatus.Connected) {
+            // Let's log in automatically once connected
+            val username = SessionManager.getUsername(context)
+            val password = "" // Password can be empty for now
+            val json = org.json.JSONObject().apply {
+                put("action", "login")
+                put("username", username)
+                put("password", password)
+            }
+            BleManager.sendJson(json.toString())
+        }
+    }
 
     // Scroll to the bottom when new messages arrive
     LaunchedEffect(messages) {
@@ -39,8 +79,23 @@ fun MessagePage(
 
     Scaffold(
         containerColor = Color.Transparent,
+        topBar = {
+            // You can add a top bar to show connection status
+            TopAppBar(
+                title = { Text(contactName) },
+                actions = {
+                    val statusText = when(connectionStatus) {
+                        ConnectionStatus.Connected -> "Connected"
+                        ConnectionStatus.Connecting -> "Connecting..."
+                        ConnectionStatus.Scanning -> "Scanning..."
+                        is ConnectionStatus.Error -> "Error"
+                        else -> "Offline"
+                    }
+                    Text(statusText, modifier = Modifier.padding(end=16.dp))
+                }
+            )
+        },
         bottomBar = {
-            // Pass the ChatViewModel to the MessageInput
             MessageInput(chatViewModel = chatViewModel)
         }
     ) { padding ->
@@ -56,13 +111,17 @@ fun MessagePage(
     }
 }
 
+
 @Composable
 fun MessageInput(
-    chatViewModel: ChatViewModel // Use the ViewModel to add messages to the UI
+    chatViewModel: ChatViewModel
 ) {
     var text by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val connectionStatus by chatViewModel.connectionStatus.collectAsState()
+
+    // Determine if the send button should be enabled
+    val isSendEnabled = text.isNotBlank() && connectionStatus == ConnectionStatus.Connected
 
     Row(
         modifier = Modifier.padding(8.dp),
@@ -86,58 +145,26 @@ fun MessageInput(
 
         Spacer(modifier = Modifier.width(8.dp))
 
+        // --- REVISED onClick LOGIC ---
+        // It's much simpler now. It just calls the ViewModel.
         Button(
             onClick = {
                 if (text.isNotBlank()) {
-                    val messageContent = text
-                    isLoading = true
-
-                    // Add the message to the UI immediately with a "sending" status
-                    // This assumes your Message data class has a status field.
-                    // If not, you may need to adapt this part.
-                    chatViewModel.addProvisionalMessage(messageContent)
-                    text = "" // Clear input
-
-                    // Create JSON for the message
-                    val messageData = mapOf(
-                        "action" to "sendMessage",
-                        "text" to messageContent
-                        // You could add conversationId, senderId, etc. here
-                    )
-                    val jsonString = Gson().toJson(messageData)
-
-                    // Perform the BLE transaction
-                    BleManager.performTransaction(jsonString, object : BleTransactionCallback {
-                        override fun onTransactionSuccess(response: String) {
-                            isLoading = false
-                            // NEW: Update the message status to "delivered"
-                            chatViewModel.updateLastMessageStatus("delivered")
-                            Toast.makeText(context, "Message Delivered", Toast.LENGTH_SHORT).show()
-                        }
-
-                        override fun onTransactionFailure(error: String) {
-                            isLoading = false
-                            // NEW: Update the message status to "failed"
-                            chatViewModel.updateLastMessageStatus("failed")
-                            Toast.makeText(context, "Send Failed: $error", Toast.LENGTH_LONG).show()
-                        }
-                    })
+                    chatViewModel.sendMessage(context, text)
+                    text = "" // Clear the input field immediately
                 }
             },
-            enabled = !isLoading && text.isNotBlank(),
+            enabled = isSendEnabled, // Use the new enabled state
             shape = CircleShape,
             modifier = Modifier.size(50.dp),
             contentPadding = PaddingValues(0.dp)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = HopFogBlue)
-            } else {
-                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
-            }
+            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
         }
     }
 }
 
+// --- MessageBubble and UserInitialIcon are unchanged ---
 
 @Composable
 fun MessageBubble(
@@ -174,13 +201,23 @@ fun MessageBubble(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(backgroundColor, RoundedCornerShape(16.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        ) {
-            Text(text = message.messageText, color = textColor)
+        Column {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .background(backgroundColor, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(text = message.messageText, color = textColor)
+            }
+            if (message.isFromCurrentUser) {
+                Text(
+                    text = message.status,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.align(Alignment.End).padding(end = 4.dp)
+                )
+            }
         }
     }
 }

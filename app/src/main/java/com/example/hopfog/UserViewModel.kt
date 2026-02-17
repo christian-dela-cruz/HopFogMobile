@@ -34,7 +34,7 @@ class UserViewModel : ViewModel() {
         val loggedInUser = User(
             id = userObject.getInt("user_id"),
             username = userObject.getString("username"),
-            email = userObject.getString("email")
+            email = userObject.optString("email", "")
         )
 
         // Update the state flow's value. Any screen observing this flow will now be recomposed.

@@ -13,146 +13,185 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
-import com.google.gson.Gson
-import com.google.gson.JsonObject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
-// Callback interface to report transaction results
-interface BleTransactionCallback {
-    fun onTransactionSuccess(response: String)
-    fun onTransactionFailure(error: String)
+sealed class ConnectionStatus {
+    object Disconnected : ConnectionStatus()
+    object Scanning : ConnectionStatus()
+    object Connecting : ConnectionStatus()
+    object Connected : ConnectionStatus()
+    data class Error(val message: String) : ConnectionStatus()
 }
 
 @SuppressLint("MissingPermission")
 object BleManager {
 
     private const val TAG = "BleManager"
-    // Use your app-specific UUIDs
-    private val HOPFOG_SERVICE_UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914b") // Must match ESP32
-    private val MESSAGE_CHARACTERISTIC_UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a8") // Must match ESP32
+    private val HOPFOG_SERVICE_UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914b")
+    private val MESSAGE_CHARACTERISTIC_UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a8")
     private val CLIENT_CHARACTERISTIC_CONFIG_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
-
-    private const val SCAN_TIMEOUT = 10000L // 10 seconds
-    private const val CONNECT_TIMEOUT = 5000L // 5 seconds
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bleGatt: BluetoothGatt? = null
+    private var messageCharacteristic: BluetoothGattCharacteristic? = null // NEW: Hold a reference to the characteristic
     private var appContext: Context? = null
-
-    // --- State Management for a single transaction ---
-    private var currentCallback: BleTransactionCallback? = null
-    private var dataToSend: ByteArray? = null
     private val handler = Handler(Looper.getMainLooper())
+
+    private val _status = MutableStateFlow<ConnectionStatus>(ConnectionStatus.Disconnected)
+    val status = _status.asStateFlow()
+
+    private val _incomingMessages = MutableSharedFlow<String>()
+    val incomingMessages = _incomingMessages.asSharedFlow()
 
     fun initialize(context: Context) {
         appContext = context.applicationContext
-        if (bluetoothAdapter == null) {
-            val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-            bluetoothAdapter = manager.adapter
-        }
+        val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothAdapter = manager.adapter
     }
 
-    // --- Core GATT Callback for managing the transaction lifecycle ---
+    // --- Core GATT Callback ---
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            handler.removeCallbacksAndMessages(null) // Clear any connection timeout
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     Log.d(TAG, "GATT Connected. Discovering services...")
+                    _status.value = ConnectionStatus.Connecting
                     bleGatt = gatt
                     gatt.discoverServices()
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     Log.d(TAG, "GATT Disconnected.")
-                    // If callback is not null, it means we disconnected unexpectedly.
-                    currentCallback?.let { finishTransaction(false, "Disconnected unexpectedly") }
+                    // Don't report an error on intentional disconnect.
+                    if (_status.value != ConnectionStatus.Disconnected) {
+                        _status.value = ConnectionStatus.Disconnected
+                    }
+                    bleGatt?.close()
+                    bleGatt = null
                 }
             } else {
                 Log.e(TAG, "Connection failed with error: $status")
-                finishTransaction(false, "Connection failed: status $status")
+                _status.value = ConnectionStatus.Error("Connection failed: status $status")
+                bleGatt?.close()
+                bleGatt = null
             }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 val service = gatt.getService(HOPFOG_SERVICE_UUID)
-                val characteristic = service?.getCharacteristic(MESSAGE_CHARACTERISTIC_UUID)
-                if (characteristic != null) {
-                    enableNotificationsAndWrite(gatt, characteristic)
+                messageCharacteristic = service?.getCharacteristic(MESSAGE_CHARACTERISTIC_UUID)
+                if (messageCharacteristic != null) {
+                    enableNotifications(gatt, messageCharacteristic!!)
                 } else {
-                    finishTransaction(false, "Characteristic not found")
+                    _status.value = ConnectionStatus.Error("Characteristic not found")
+                    disconnect()
                 }
             } else {
-                finishTransaction(false, "Service discovery failed")
+                _status.value = ConnectionStatus.Error("Service discovery failed")
+                disconnect()
             }
         }
 
         override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d(TAG, "Notifications enabled. Writing data...")
-                val characteristic = descriptor.characteristic
-                characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                characteristic.value = dataToSend
-                gatt.writeCharacteristic(characteristic)
+                Log.d(TAG, "Notifications enabled. Connection fully established.")
+                _status.value = ConnectionStatus.Connected // We are now fully connected!
             } else {
-                finishTransaction(false, "Failed to enable notifications")
+                _status.value = ConnectionStatus.Error("Failed to enable notifications")
+                disconnect()
             }
         }
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
             val response = characteristic.value.toString(Charsets.UTF_8)
-            Log.d(TAG, "Received response: $response")
-            finishTransaction(true, response) // Success!
+            Log.d(TAG, "Received notification: $response")
+
+            // --- THIS IS THE FIX ---
+            // The BLE callback runs on a background thread.
+            // We must post the work to the main thread before emitting to the flow
+            // that the UI is observing.
+            handler.post {
+                _incomingMessages.tryEmit(response)
+            }
+            // --- END OF FIX ---
+        }
+
+        override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG, "Write successful.")
+            } else {
+                Log.w(TAG, "Write failed with status: $status")
+            }
         }
     }
 
     // --- Scan Callback ---
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            // Check if the found device has our specific service UUID
             if (result.scanRecord?.serviceUuids?.any { it.uuid == HOPFOG_SERVICE_UUID } == true) {
-                Log.d(TAG, "HopFog Gateway found: ${result.device.name ?: "Unknown"}")
+                Log.d(TAG, "HopFog Hub found: ${result.device.name ?: "Unknown"}")
                 stopScan()
-                handler.postDelayed({
-                    finishTransaction(false, "Connection timed out")
-                }, CONNECT_TIMEOUT)
+                _status.value = ConnectionStatus.Connecting
                 result.device.connectGatt(appContext, false, gattCallback)
             }
         }
         override fun onScanFailed(errorCode: Int) {
-            finishTransaction(false, "BLE scan failed: code $errorCode")
+            _status.value = ConnectionStatus.Error("BLE scan failed: code $errorCode")
         }
     }
 
-    // --- PUBLIC METHOD TO START A TRANSACTION ---
-    fun performTransaction(data: String, cb: BleTransactionCallback) {
+    // --- NEW PUBLIC METHODS for connection management ---
+
+    fun connect() {
         val context = appContext ?: run {
-            cb.onTransactionFailure("BleManager not initialized")
+            _status.value = ConnectionStatus.Error("BleManager not initialized")
             return
         }
-        if (!hasPermissions(context)) {
-            cb.onTransactionFailure("Bluetooth permissions not granted")
-            return
-        }
-        if (bluetoothAdapter?.isEnabled != true) {
-            cb.onTransactionFailure("Bluetooth is not enabled")
+        if (!hasPermissions(context) || bluetoothAdapter?.isEnabled != true) {
+            _status.value = ConnectionStatus.Error("Permissions or Bluetooth not enabled")
             return
         }
 
-        this.currentCallback = cb
-        this.dataToSend = data.toByteArray(Charsets.UTF_8)
-
-        Log.d(TAG, "Starting transaction. Scanning for HopFog Gateway...")
+        Log.d(TAG, "Starting scan for HopFog Hub...")
+        _status.value = ConnectionStatus.Scanning
         val scanSettings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
         bluetoothAdapter?.bluetoothLeScanner?.startScan(null, scanSettings, scanCallback)
 
         handler.postDelayed({
-            stopScan()
-            finishTransaction(false, "Device not found")
-        }, SCAN_TIMEOUT)
+            if (_status.value == ConnectionStatus.Scanning) {
+                stopScan()
+                _status.value = ConnectionStatus.Error("Device not found")
+            }
+        }, 10000L) // 10 second scan timeout
+    }
+
+    fun disconnect() {
+        Log.d(TAG, "Disconnecting...")
+        _status.value = ConnectionStatus.Disconnected
+        bleGatt?.disconnect()
+    }
+
+    // --- NEW PUBLIC METHODS for sending data ---
+
+    fun sendJson(jsonString: String) {
+        if (_status.value != ConnectionStatus.Connected) {
+            Log.w(TAG, "Not connected, cannot send data.")
+            return
+        }
+        messageCharacteristic?.let { char ->
+            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            char.value = jsonString.toByteArray(Charsets.UTF_8)
+            bleGatt?.writeCharacteristic(char)
+        } ?: run {
+            Log.w(TAG, "Characteristic not available, cannot send data.")
+        }
     }
 
     // --- Helper & Cleanup Methods ---
-    private fun enableNotificationsAndWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+    private fun enableNotifications(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
         gatt.setCharacteristicNotification(characteristic, true)
         val descriptor = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID)
         descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
@@ -164,27 +203,11 @@ object BleManager {
         bluetoothAdapter?.bluetoothLeScanner?.stopScan(scanCallback)
     }
 
-    private fun finishTransaction(success: Boolean, message: String) {
-        Handler(Looper.getMainLooper()).post {
-            bleGatt?.disconnect()
-            bleGatt?.close()
-            bleGatt = null
-            if (success) {
-                currentCallback?.onTransactionSuccess(message)
-            } else {
-                currentCallback?.onTransactionFailure(message)
-            }
-            currentCallback = null // Mark transaction as complete
-        }
-    }
-
-    // --- Permissions Check ---
     fun hasPermissions(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
         } else {
-            // For older Android, location is required for scanning
             ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         }
     }

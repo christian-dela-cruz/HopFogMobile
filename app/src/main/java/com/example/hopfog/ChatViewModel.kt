@@ -1,151 +1,114 @@
 package com.example.hopfog
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-// Helper class to represent the cooldown state
-sealed class CooldownState {
-    data object Ready : CooldownState()
-    data class CoolingDown(val secondsRemaining: Int) : CooldownState()
-}
-
 class ChatViewModel : ViewModel() {
 
+    // --- Properties for the Conversation List Page ---
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
     private val _conversations = MutableStateFlow<List<ChatConversation>>(emptyList())
     val conversations = _conversations.asStateFlow()
 
+    // --- Properties for the Single Message Page ---
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
-    val messages: StateFlow<List<Message>> = _messages.asStateFlow()
+    val messages = _messages.asStateFlow()
 
     private val _contactName = MutableStateFlow("")
     val contactName = _contactName.asStateFlow()
 
-    // --- Cooldown State for Online Mode ---
-    private val _cooldownState = MutableStateFlow<CooldownState>(CooldownState.Ready)
-    val cooldownState = _cooldownState.asStateFlow()
+    val connectionStatus = BleManager.status
 
-    private var cooldownJob: Job? = null
-
+    // --- Functions for the Conversation List Page ---
     fun loadConversations(context: Context) {
         viewModelScope.launch {
             _isLoading.value = true
+            // This will get the conversations from the MockStore inside NetworkManager
             _conversations.value = NetworkManager.getConversations(context)
             _isLoading.value = false
         }
     }
 
-    fun loadMessages(context: Context, conversationId: Int, name: String) {
+    // --- Functions for the Single Message Page ---
+    fun prepareChat(conversationId: Int, name: String) {
         _contactName.value = name
-        viewModelScope.launch {
-            _isLoading.value = true
-            _messages.value = NetworkManager.getMessages(context, conversationId)
-            _isLoading.value = false
-        }
+        // This will get messages for a specific chat from the MockStore
+        _messages.value = NetworkManager.MockStore.getMessages(conversationId)
     }
 
-    // --- sendMessage for ONLINE mode ---
-    fun sendMessage(context: Context, conversationId: Int, messageText: String) {
-        if (_cooldownState.value is CooldownState.CoolingDown) return
+    fun connectToHub() {
+        Log.d("ChatViewModel", "Requesting BLE connection...")
+        BleManager.connect()
+    }
+
+    fun disconnectFromHub() {
+        Log.d("ChatViewModel", "Requesting BLE disconnection...")
+        BleManager.disconnect()
+    }
+
+    fun sendMessage(context: Context, messageText: String) {
         if (messageText.isBlank()) return
-
-        viewModelScope.launch {
-            val response = NetworkManager.sendMessage(context, conversationId, messageText)
-            if (response != null) {
-                if (response.success) {
-                    startCooldown(30)
-                    _messages.value = NetworkManager.getMessages(context, conversationId)
-                } else {
-                    if (response.secondsRemaining > 0) {
-                        startCooldown(response.secondsRemaining)
-                    }
-                }
-            }
+        if (connectionStatus.value != ConnectionStatus.Connected) {
+            Log.w("ChatViewModel", "Cannot send message, not connected.")
+            return
         }
+
+        addProvisionalMessage(messageText)
+
+        val currentUserId = SessionManager.getUserId(context)
+        val currentUsername = SessionManager.getUsername(context)
+        val messageData = mapOf(
+            "action" to "sendMessage",
+            "sender_id" to currentUserId,
+            "sender_username" to currentUsername,
+            "text" to messageText
+        )
+        val jsonString = Gson().toJson(messageData)
+
+        BleManager.sendJson(jsonString)
+        updateLastMessageStatus("delivered") // Assume success for now
     }
 
-    private fun startCooldown(durationSeconds: Int) {
-        cooldownJob?.cancel()
-        cooldownJob = viewModelScope.launch {
-            for (i in durationSeconds downTo 1) {
-                _cooldownState.value = CooldownState.CoolingDown(i)
-                delay(1000)
-            }
-            _cooldownState.value = CooldownState.Ready
-        }
-    }
-
-    fun cancelCooldown() {
-        cooldownJob?.cancel()
-        _cooldownState.value = CooldownState.Ready
-    }
-
-
-    // ##################################################################
-    // --- NEW FUNCTIONS FOR OFFLINE (BLE) MESSAGING ---
-    // ##################################################################
-
-    /**
-     * Instantly adds a new message to the UI with a "sending" status.
-     * This is used to provide immediate feedback to the user in BLE mode.
-     */
-    fun addProvisionalMessage(messageText: String) {
+    // --- Helper functions for UI updates ---
+    private fun addProvisionalMessage(messageText: String) {
         val provisionalMessage = Message(
-            messageId = -1, // Use a temporary ID
-            senderUsername = "Me", // Or get the actual current user's name
+            messageId = -1,
+            senderUsername = "Me",
             messageText = messageText,
             timestamp = "Sending...",
             isFromCurrentUser = true,
             status = "sending"
         )
-        // Add this new message to the end of the current list
         _messages.value = _messages.value + provisionalMessage
     }
 
-    /**
-     * Finds the last message sent by the current user and updates its status.
-     * This is called from the BLE transaction callbacks.
-     */
-    fun updateLastMessageStatus(newStatus: String) {
-        // Create a mutable copy of the list
+    private fun updateLastMessageStatus(newStatus: String) {
         val updatedList = _messages.value.toMutableList()
-        var lastSendingIndex = -1
-
-        // --- THIS IS THE FIX ---
-        // Replace findLastIndex with a standard loop that iterates backwards.
-        for (i in updatedList.indices.reversed()) {
-            val message = updatedList[i]
-            if (message.isFromCurrentUser && message.status == "sending") {
-                lastSendingIndex = i
-                break // We found the last one, so we can stop looking.
-            }
-        }
-        // --- END OF FIX ---
+        val lastSendingIndex = updatedList.indexOfLast { it.isFromCurrentUser && it.status == "sending" }
 
         if (lastSendingIndex != -1) {
-            // Get the message to be updated
             val messageToUpdate = updatedList[lastSendingIndex]
-            // Create a new message object with the updated status
             val updatedMessage = messageToUpdate.copy(
                 status = newStatus,
-                // Optionally update the timestamp to the current time
                 timestamp = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
             )
-            // Replace the old message with the updated one
             updatedList[lastSendingIndex] = updatedMessage
-            // Update the state flow to refresh the UI
             _messages.value = updatedList
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disconnectFromHub()
     }
 }

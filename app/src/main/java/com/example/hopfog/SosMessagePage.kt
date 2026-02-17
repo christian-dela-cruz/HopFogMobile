@@ -22,22 +22,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.HopFogBlue
 
-val SosBackgroundColor = Color(0xFFD9534F)
+// Define the color here if it's specific to this page
+val SosBackgroundColor = Color(0xFF5C1B1B)
 
 @Composable
 fun SosMessagePage(
     chatViewModel: ChatViewModel,
-    conversationId: Int
+    conversationId: Int, // Keep for preparing the chat
+    contactName: String // Keep for preparing the chat
 ) {
     val context = LocalContext.current
     val messages by chatViewModel.messages.collectAsState()
     val listState = rememberLazyListState()
     var text by remember { mutableStateOf("") }
 
-    // --- NEW: Get cooldown state from ViewModel ---
-    val cooldownState by chatViewModel.cooldownState.collectAsState()
-    val isSendingEnabled = cooldownState is CooldownState.Ready
-    // ---
+    // Get the connection status from the ViewModel
+    val connectionStatus by chatViewModel.connectionStatus.collectAsState()
+    val isConnected = connectionStatus is ConnectionStatus.Connected
 
     val quickReplies = listOf(
         "I am safe.", "Need medical help.",
@@ -46,12 +47,18 @@ fun SosMessagePage(
         "Danger here. Stay Away.","Share Location."
     )
 
-    // This makes sure the timer is cancelled when you navigate away from this screen
-    DisposableEffect(Unit) {
+    // --- NEW LIFECYCLE MANAGEMENT (Same as MessagePage) ---
+    LaunchedEffect(key1 = Unit) {
+        chatViewModel.prepareChat(conversationId, contactName)
+        chatViewModel.connectToHub()
+    }
+
+    DisposableEffect(key1 = Unit) {
         onDispose {
-            chatViewModel.cancelCooldown()
+            chatViewModel.disconnectFromHub()
         }
     }
+    // ---
 
     // Scroll to the bottom when new messages arrive
     LaunchedEffect(messages) {
@@ -61,6 +68,7 @@ fun SosMessagePage(
     }
 
     Scaffold(
+        // Use the SOS color for the main container
         containerColor = SosBackgroundColor,
         bottomBar = {
             Column(modifier = Modifier.background(Color.Black)) {
@@ -70,24 +78,21 @@ fun SosMessagePage(
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    // Make the grid take up less space
                     modifier = Modifier.height(180.dp)
                 ) {
                     items(quickReplies) { reply ->
                         Button(
                             onClick = {
-                                // The check happens in the ViewModel, but good practice to have it here too
-                                if (isSendingEnabled) {
-                                    chatViewModel.sendMessage(context, conversationId, reply)
+                                // REVISED: Use the new sendMessage signature
+                                if (isConnected) {
+                                    chatViewModel.sendMessage(context, reply)
                                 }
                             },
-                            // --- NEW: Disable button during cooldown ---
-                            enabled = isSendingEnabled,
+                            enabled = isConnected, // Button is enabled only when connected
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.DarkGray,
                                 contentColor = Color.White,
-                                // Make disabled buttons visually distinct
                                 disabledContainerColor = Color(0xFF3A3A3C),
                                 disabledContentColor = Color.Gray
                             )
@@ -116,28 +121,19 @@ fun SosMessagePage(
                             unfocusedTextColor = Color.White
                         )
                     )
-
                     Spacer(modifier = Modifier.width(8.dp))
-
-                    // --- NEW: Updated IconButton with cooldown logic ---
                     IconButton(
                         onClick = {
-                            if (isSendingEnabled && text.isNotBlank()) {
-                                chatViewModel.sendMessage(context, conversationId, text)
+                            // REVISED: Use the new sendMessage signature
+                            if (isConnected && text.isNotBlank()) {
+                                chatViewModel.sendMessage(context, text)
                                 text = ""
                             }
                         },
-                        enabled = isSendingEnabled && text.isNotBlank()
+                        enabled = isConnected && text.isNotBlank()
                     ) {
-                        if (isSendingEnabled) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = HopFogBlue)
-                        } else {
-                            // If on cooldown, show the remaining seconds
-                            val secondsLeft = (cooldownState as? CooldownState.CoolingDown)?.secondsRemaining ?: 0
-                            Text("$secondsLeft", color = Color.Gray, fontWeight = FontWeight.Bold)
-                        }
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = HopFogBlue)
                     }
-                    // --- END OF NEW LOGIC ---
                 }
             }
         }

@@ -189,11 +189,27 @@ fun AppMainPage(
                 composable("home_content") {
                     HomePageContent(
                         isOnline = hasBlePermissions, // The "isOnline" prop now just means "can we go off-grid?"
-                        onSendSosClick = { /* ... */ },
+
+                        onSendSosClick = {
+                            // Check if the user has already agreed to the SOS terms
+                            if (SessionManager.hasAgreedToSos(context)) {
+                                // If they have, find the chat and navigate directly
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    val sosResponse = NetworkManager.findOrCreateSosChat(context)
+                                    if (sosResponse != null) {
+                                        innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}")
+                                    } else {
+                                        Toast.makeText(context, "Could not create SOS chat.", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            } else {
+                                // If they have NOT, navigate to the agreement page first
+                                innerNavController.navigate("sos_agreement")
+                            }
+                        },
                         onNewMessageClick = { innerNavController.navigate("new_message_page") }
                     )
                 }
-                // ... (All your other composable routes)
                 composable("sos_agreement") {
                     SosAgreementPage(
                         onAgreed = {
@@ -239,10 +255,14 @@ fun AppMainPage(
                 ) { backStackEntry ->
                     val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
                     val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
-                    LaunchedEffect(conversationId) {
-                        chatViewModel.loadMessages(context, conversationId, contactName)
-                    }
-                    MessagePage(chatViewModel = chatViewModel, conversationId = conversationId)
+
+                    // THE FIX: Call the new MessagePage with all required parameters.
+                    // The `LaunchedEffect` that prepares the chat is now inside MessagePage itself.
+                    MessagePage(
+                        chatViewModel = chatViewModel,
+                        conversationId = conversationId,
+                        contactName = contactName
+                    )
                 }
                 composable(
                     "sos_messages/{conversationId}/{contactName}",
@@ -253,10 +273,12 @@ fun AppMainPage(
                 ) { backStackEntry ->
                     val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
                     val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
-                    LaunchedEffect(conversationId) {
-                        chatViewModel.loadMessages(context, conversationId, contactName)
-                    }
-                    SosMessagePage(chatViewModel = chatViewModel, conversationId = conversationId)
+                    // This is now the correct call for the fixed SosMessagePage
+                    SosMessagePage(
+                        chatViewModel = chatViewModel,
+                        conversationId = conversationId,
+                        contactName = contactName
+                    )
                 }
                 composable("new_message_page") {
                     NewMessagePage(

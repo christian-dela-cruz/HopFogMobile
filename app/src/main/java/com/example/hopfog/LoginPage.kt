@@ -1,6 +1,8 @@
 package com.example.hopfog
 
 import android.Manifest
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -31,6 +33,38 @@ import com.example.hopfog.ui.theme.HopFogBlue
 import com.example.hopfog.ui.theme.HopFogTheme
 import kotlinx.coroutines.launch
 
+private object RememberMeManager {
+    private const val PREFS_NAME = "LoginPrefs"
+    private const val PREF_USERNAME = "username"
+    private const val PREF_PASSWORD = "password"
+    private const val PREF_REMEMBER_ME = "remember_me"
+
+    private fun getPrefs(context: Context): SharedPreferences {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    fun saveCredentials(context: Context, username: String, password: String, remember: Boolean) {
+        val editor = getPrefs(context).edit()
+        if (remember) {
+            editor.putString(PREF_USERNAME, username)
+            editor.putString(PREF_PASSWORD, password)
+            editor.putBoolean(PREF_REMEMBER_ME, true)
+        } else {
+            // Clear all saved credentials if remember is false
+            editor.clear()
+        }
+        editor.apply()
+    }
+
+    fun loadCredentials(context: Context): Triple<String, String, Boolean> {
+        val prefs = getPrefs(context)
+        val username = prefs.getString(PREF_USERNAME, "") ?: ""
+        val password = prefs.getString(PREF_PASSWORD, "") ?: ""
+        val rememberMe = prefs.getBoolean(PREF_REMEMBER_ME, false)
+        return Triple(username, password, rememberMe)
+    }
+}
+
 
 @Composable
 fun LoginPage(
@@ -44,9 +78,15 @@ fun LoginPage(
     var rememberMe by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
-    // THE FIX: Get a coroutine scope tied to the Composable's lifecycle.
     val scope = rememberCoroutineScope()
+
+    // Load saved credentials when the page is first displayed
+    LaunchedEffect(Unit) {
+        val (savedUser, savedPass, shouldRemember) = RememberMeManager.loadCredentials(context)
+        email = savedUser
+        password = savedPass
+        rememberMe = shouldRemember
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -59,6 +99,7 @@ fun LoginPage(
         }
     }
 
+    // This initialization needs to happen for the permission check to work
     LaunchedEffect(Unit) {
         BleManager.initialize(context)
     }
@@ -71,7 +112,7 @@ fun LoginPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = "HopFog", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 40.dp))
-            Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 24.dp))
+            HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 24.dp))
             Text(text = "Sign In", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.align(Alignment.Start))
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -106,14 +147,13 @@ fun LoginPage(
 
                     isLoading = true
 
-                    // THE FIX: Use the scope to launch the coroutine.
                     scope.launch {
-                        // We call the NetworkManager. It pretends to log in and saves the session.
+                        // Save credentials based on the "Remember Me" checkbox state
+                        RememberMeManager.saveCredentials(context, email, password, rememberMe)
+
                         val response = NetworkManager.loginUser(context, email, password)
                         isLoading = false
 
-                        // The response is now a mock success from NetworkManager.
-                        // We trust it and navigate immediately.
                         if (response != null && response.getBoolean("success")) {
                             Toast.makeText(context, "Login details saved.", Toast.LENGTH_SHORT).show()
                             userViewModel.onLoginSuccess(response)
@@ -138,6 +178,10 @@ fun LoginPage(
             }
 
             Spacer(modifier = Modifier.weight(1f))
+
+            //Signup Button
+
+            /*
             val annotatedText = buildAnnotatedString {
                 withStyle(style = SpanStyle(color = Color.LightGray)) { append("Don't have account? ") }
                 pushStringAnnotation(tag = "SignUp", annotation = "SignUp")
@@ -145,23 +189,14 @@ fun LoginPage(
                 pop()
             }
             ClickableText(text = annotatedText, onClick = { offset -> annotatedText.getStringAnnotations(tag = "SignUp", start = offset, end = offset).firstOrNull()?.let { onSignUpClicked() } })
+            */
         }
     }
 }
 
+// Assuming this function exists in another file like AuthUI.kt, keep this commented out
 //@Composable
-//fun authTextFieldColors() = OutlinedTextFieldDefaults.colors(
-//    focusedBorderColor = HopFogBlue,
-//    unfocusedBorderColor = Color.Gray,
-//    focusedLabelColor = HopFogBlue,
-//    unfocusedLabelColor = Color.Gray,
-//    focusedTextColor = Color.White,
-//    unfocusedTextColor = Color.White,
-//    cursorColor = HopFogBlue,
-//    focusedLeadingIconColor = HopFogBlue,
-//    unfocusedLeadingIconColor = Color.Gray
-//)
-
+//fun authTextFieldColors() = ...
 
 @Preview(showBackground = true)
 @Composable
@@ -170,6 +205,7 @@ fun LoginPagePreview() {
         LoginPage(
             onLoginClicked = {},
             onSignUpClicked = {},
-            onForgotPasswordClicked = {})
+            onForgotPasswordClicked = {}
+        )
     }
 }

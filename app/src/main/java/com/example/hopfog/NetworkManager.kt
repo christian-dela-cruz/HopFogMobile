@@ -6,6 +6,8 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 /**
  * MOCK (UI-only) NetworkManager
@@ -286,4 +288,21 @@ object NetworkManager {
         }
         return MockStore.findOrCreateChatWithUser(otherUserId)
     }
+
+    suspend fun validateLoginWithBle(context: Context, jsonString: String): Pair<Boolean, String> =
+        suspendCancellableCoroutine { continuation ->
+            BleManager.performLoginTransaction(jsonString, object : BleTransactionCallback {
+                override fun onTransactionSuccess(response: String) {
+                    if (continuation.isActive) {
+                        continuation.resume(Pair(true, response))
+                    }
+                }
+
+                override fun onTransactionFailure(error: String) {
+                    if (continuation.isActive) {
+                        continuation.resume(Pair(false, error))
+                    }
+                }
+            })
+        }
 }

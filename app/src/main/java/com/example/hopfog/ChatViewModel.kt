@@ -47,8 +47,16 @@ class ChatViewModel : ViewModel() {
     }
 
     fun connectToHub() {
-        Log.d("ChatViewModel", "Requesting BLE connection...")
-        BleManager.connect()
+        // --- THIS IS THE FIX ---
+        // Only try to connect if we are currently disconnected.
+        // If a connection was already established by the LoginPage, this will do nothing,
+        // which is exactly what we want.
+        if (BleManager.status.value is ConnectionStatus.Disconnected) {
+            Log.d("ChatViewModel", "Requesting new BLE connection...")
+            BleManager.connect()
+        } else {
+            Log.d("ChatViewModel", "Using existing BLE connection established during login.")
+        }
     }
 
     fun disconnectFromHub() {

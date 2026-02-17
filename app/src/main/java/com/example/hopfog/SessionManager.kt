@@ -7,6 +7,9 @@ object SessionManager {
     private const val KEY_USER_ID = "user_id"
     private const val KEY_USERNAME = "username"
     private const val KEY_HAS_AGREED_SOS = "has_agreed_sos"
+    private const val KEY_AUTO_LOGIN_USER = "auto_login_user"
+    private const val KEY_AUTO_LOGIN_PASS = "auto_login_pass"
+
 
     // Saves ALL user data on login
     fun saveSession(context: Context, userId: Int, username: String, hasAgreedSos: Boolean) {
@@ -43,4 +46,6 @@ object SessionManager {
         editor.putBoolean(KEY_HAS_AGREED_SOS, hasAgreed)
         editor.apply()
     }
+
+
 }

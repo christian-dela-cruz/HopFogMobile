@@ -129,6 +129,8 @@ fun LoginPage(
             }
             Spacer(modifier = Modifier.height(32.dp))
 
+// In LoginPage.kt
+
             Button(
                 onClick = {
                     if (email.isBlank() || password.isBlank()) {
@@ -146,20 +148,31 @@ fun LoginPage(
                     }
 
                     isLoading = true
+                    RememberMeManager.saveCredentials(context, email, password, rememberMe)
+
+                    // Create the JSON string for the login command
+                    val loginData = mapOf("action" to "login", "username" to email, "password" to password)
+                    val jsonString = com.google.gson.Gson().toJson(loginData)
 
                     scope.launch {
-                        // Save credentials based on the "Remember Me" checkbox state
-                        RememberMeManager.saveCredentials(context, email, password, rememberMe)
-
-                        val response = NetworkManager.loginUser(context, email, password)
+                        // Call the function that performs the real BLE validation
+                        val (success, response) = NetworkManager.validateLoginWithBle(context, jsonString)
                         isLoading = false
 
-                        if (response != null && response.getBoolean("success")) {
-                            Toast.makeText(context, "Login details saved.", Toast.LENGTH_SHORT).show()
-                            userViewModel.onLoginSuccess(response)
+                        if (success) {
+                            Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                            // Create a MOCK user object for the ViewModel
+                            val mockUserJson = org.json.JSONObject().apply {
+                                put("user", org.json.JSONObject().apply {
+                                    put("user_id", 999) // Mock ID
+                                    put("username", email)
+                                    put("email", "") // Safely empty
+                                })
+                            }
+                            userViewModel.onLoginSuccess(mockUserJson)
                             onLoginClicked() // Navigate to AppMainPage
                         } else {
-                            Toast.makeText(context, "Login Failed", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Login Failed: $response", Toast.LENGTH_LONG).show()
                         }
                     }
                 },
@@ -178,26 +191,9 @@ fun LoginPage(
             }
 
             Spacer(modifier = Modifier.weight(1f))
-
-            //Signup Button
-
-            /*
-            val annotatedText = buildAnnotatedString {
-                withStyle(style = SpanStyle(color = Color.LightGray)) { append("Don't have account? ") }
-                pushStringAnnotation(tag = "SignUp", annotation = "SignUp")
-                withStyle(style = SpanStyle(color = HopFogBlue, fontWeight = FontWeight.Bold)) { append("Sign Up") }
-                pop()
-            }
-            ClickableText(text = annotatedText, onClick = { offset -> annotatedText.getStringAnnotations(tag = "SignUp", start = offset, end = offset).firstOrNull()?.let { onSignUpClicked() } })
-            */
         }
     }
 }
-
-// Assuming this function exists in another file like AuthUI.kt, keep this commented out
-//@Composable
-//fun authTextFieldColors() = ...
-
 @Preview(showBackground = true)
 @Composable
 fun LoginPagePreview() {

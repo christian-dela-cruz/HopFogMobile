@@ -53,22 +53,21 @@ fun MessagePage(
         }
     }
 
-    // NEW: Show a toast when connection status changes
-    LaunchedEffect(connectionStatus) {
-        if (connectionStatus is ConnectionStatus.Error) {
-            Toast.makeText(context, (connectionStatus as ConnectionStatus.Error).message, Toast.LENGTH_LONG).show()
-        } else if (connectionStatus is ConnectionStatus.Connected) {
-            // Let's log in automatically once connected
-            val username = SessionManager.getUsername(context)
-            val password = "" // Password can be empty for now
-            val json = org.json.JSONObject().apply {
-                put("action", "login")
-                put("username", username)
-                put("password", password)
-            }
-            BleManager.sendJson(json.toString())
-        }
-    }
+//    LaunchedEffect(connectionStatus) {
+//        if (connectionStatus is ConnectionStatus.Error) {
+//            Toast.makeText(context, (connectionStatus as ConnectionStatus.Error).message, Toast.LENGTH_LONG).show()
+//        } else if (connectionStatus is ConnectionStatus.Connected) {
+//            // Let's log in automatically once connected
+//            val username = SessionManager.getUsername(context)
+//            val password = "" // Password can be empty for now
+//            val json = org.json.JSONObject().apply {
+//                put("action", "login")
+//                put("username", username)
+//                put("password", password)
+//            }
+//            BleManager.sendJson(json.toString())
+//        }
+//    }
 
     // Scroll to the bottom when new messages arrive
     LaunchedEffect(messages) {

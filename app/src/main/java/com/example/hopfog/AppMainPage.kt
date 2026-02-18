@@ -228,6 +228,9 @@ fun AppMainPage(
                 }
 
                 composable("chats_list") {
+                    LaunchedEffect(Unit) {
+                        chatViewModel.setContext(context)
+                    }
                     ChatsListPage(
                         chatViewModel = chatViewModel,
                         onConversationClick = { conversationId, contactName ->

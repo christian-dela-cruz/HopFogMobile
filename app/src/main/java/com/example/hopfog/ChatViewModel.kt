@@ -1,61 +1,60 @@
 package com.example.hopfog
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+// The private RememberMeManager object has been completely removed.
+
 class ChatViewModel : ViewModel() {
 
-    // --- Properties for the Conversation List Page ---
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
-
     private val _conversations = MutableStateFlow<List<ChatConversation>>(emptyList())
     val conversations = _conversations.asStateFlow()
-
-    // --- Properties for the Single Message Page ---
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages = _messages.asStateFlow()
-
     private val _contactName = MutableStateFlow("")
     val contactName = _contactName.asStateFlow()
-
     val connectionStatus = BleManager.status
+    private val _connectedUsers = MutableStateFlow<List<String>>(emptyList())
+    val connectedUsers = _connectedUsers.asStateFlow()
 
-    // --- Functions for the Conversation List Page ---
+    @SuppressLint("StaticFieldLeak")
+    private lateinit var appContext: Context
+
+    fun setContext(context: Context) {
+        appContext = context.applicationContext
+    }
+
     fun loadConversations(context: Context) {
         viewModelScope.launch {
             _isLoading.value = true
-            // This will get the conversations from the MockStore inside NetworkManager
             _conversations.value = NetworkManager.getConversations(context)
             _isLoading.value = false
         }
     }
 
-    // --- Functions for the Single Message Page ---
     fun prepareChat(conversationId: Int, name: String) {
         _contactName.value = name
-        // This will get messages for a specific chat from the MockStore
         _messages.value = NetworkManager.MockStore.getMessages(conversationId)
     }
 
     fun connectToHub() {
-        // --- THIS IS THE FIX ---
-        // Only try to connect if we are currently disconnected.
-        // If a connection was already established by the LoginPage, this will do nothing,
-        // which is exactly what we want.
         if (BleManager.status.value is ConnectionStatus.Disconnected) {
             Log.d("ChatViewModel", "Requesting new BLE connection...")
             BleManager.connect()
         } else {
-            Log.d("ChatViewModel", "Using existing BLE connection established during login.")
+            Log.d("ChatViewModel", "Using existing BLE connection.")
         }
     }
 
@@ -64,30 +63,29 @@ class ChatViewModel : ViewModel() {
         BleManager.disconnect()
     }
 
-    fun sendMessage(context: Context, messageText: String) {
+    fun sendMessage(context: Context, messageText: String, recipientUsername: String) {
         if (messageText.isBlank()) return
-        if (connectionStatus.value != ConnectionStatus.Connected) {
-            Log.w("ChatViewModel", "Cannot send message, not connected.")
+        if (connectionStatus.value != ConnectionStatus.Ready) {
+            Log.w("ChatViewModel", "Cannot send message, connection not ready.")
             return
         }
 
         addProvisionalMessage(messageText)
 
-        val currentUserId = SessionManager.getUserId(context)
+        // --- THIS IS THE FIX ---
+        // Use the existing public SessionManager to get the current user's name
         val currentUsername = SessionManager.getUsername(context)
         val messageData = mapOf(
             "action" to "sendMessage",
-            "sender_id" to currentUserId,
             "sender_username" to currentUsername,
+            "recipient_username" to recipientUsername,
             "text" to messageText
         )
-        val jsonString = Gson().toJson(messageData)
+        val jsonString = com.google.gson.Gson().toJson(messageData)
 
         BleManager.sendJson(jsonString)
-        updateLastMessageStatus("delivered") // Assume success for now
     }
 
-    // --- Helper functions for UI updates ---
     private fun addProvisionalMessage(messageText: String) {
         val provisionalMessage = Message(
             messageId = -1,
@@ -106,9 +104,14 @@ class ChatViewModel : ViewModel() {
 
         if (lastSendingIndex != -1) {
             val messageToUpdate = updatedList[lastSendingIndex]
+            val newTimestamp = if (newStatus == "failed") {
+                "Failed"
+            } else {
+                SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
+            }
             val updatedMessage = messageToUpdate.copy(
                 status = newStatus,
-                timestamp = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
+                timestamp = newTimestamp
             )
             updatedList[lastSendingIndex] = updatedMessage
             _messages.value = updatedList
@@ -118,5 +121,77 @@ class ChatViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         disconnectFromHub()
+    }
+
+    init {
+        BleManager.incomingMessages.onEach { jsonString ->
+            try {
+                val json = org.json.JSONObject(jsonString)
+                when (json.optString("action")) {
+
+                    "userList" -> {
+                        val usersArray = json.getJSONArray("users")
+                        val userList = mutableListOf<String>()
+                        for (i in 0 until usersArray.length()) {
+                            userList.add(usersArray.getString(i))
+                        }
+                        _connectedUsers.value = userList
+                    }
+
+                    "sendMessage" -> {
+                        val sender = json.getString("sender_username")
+                        val recipient = json.getString("recipient_username")
+                        val text = json.getString("text")
+
+                        if (::appContext.isInitialized) {
+                            // --- THIS IS THE FIX ---
+                            // Use the existing public SessionManager
+                            val currentUser = SessionManager.getUsername(appContext)
+
+                            if (sender == currentUser) {
+                                updateLastMessageStatus("delivered")
+                            } else if (recipient == currentUser && sender == _contactName.value) {
+                                addIncomingMessage(sender, text)
+                            }
+                        }
+                    }
+
+                    "login" -> {
+                        Log.d("ChatViewModel", "Login status update received: ${json.optString("status")}")
+                        requestUserList()
+                    }
+
+                    "error" -> {
+                        val errorMessage = json.getString("message")
+                        Log.e("ChatViewModel", "Received error from hub: $errorMessage")
+                        if (errorMessage == "Recipient not connected") {
+                            updateLastMessageStatus("failed")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error parsing incoming JSON", e)
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun addIncomingMessage(senderUsername: String, messageText: String) {
+        val incomingMessage = Message(
+            messageId = (_messages.value.lastOrNull()?.messageId ?: 0) + 1,
+            senderUsername = senderUsername,
+            messageText = messageText,
+            timestamp = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date()),
+            isFromCurrentUser = false,
+            status = "delivered"
+        )
+        _messages.value = _messages.value + incomingMessage
+    }
+
+    fun requestUserList() {
+        if (connectionStatus.value == ConnectionStatus.Ready) {
+            val request = mapOf("action" to "getUserList")
+            val jsonString = com.google.gson.Gson().toJson(request)
+            BleManager.sendJson(jsonString)
+        }
     }
 }

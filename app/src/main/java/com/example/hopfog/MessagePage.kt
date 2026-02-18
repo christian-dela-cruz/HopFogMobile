@@ -84,7 +84,7 @@ fun MessagePage(
                 title = { Text(contactName) },
                 actions = {
                     val statusText = when(connectionStatus) {
-                        ConnectionStatus.Connected -> "Connected"
+                        ConnectionStatus.Ready -> "Connected"
                         ConnectionStatus.Connecting -> "Connecting..."
                         ConnectionStatus.Scanning -> "Scanning..."
                         is ConnectionStatus.Error -> "Error"
@@ -120,7 +120,7 @@ fun MessageInput(
     val connectionStatus by chatViewModel.connectionStatus.collectAsState()
 
     // Determine if the send button should be enabled
-    val isSendEnabled = text.isNotBlank() && connectionStatus == ConnectionStatus.Connected
+    val isSendEnabled = text.isNotBlank() && connectionStatus == ConnectionStatus.Ready
 
     Row(
         modifier = Modifier.padding(8.dp),
@@ -149,7 +149,7 @@ fun MessageInput(
         Button(
             onClick = {
                 if (text.isNotBlank()) {
-                    chatViewModel.sendMessage(context, text)
+                    chatViewModel.sendMessage(context, text, chatViewModel.contactName.value)
                     text = "" // Clear the input field immediately
                 }
             },

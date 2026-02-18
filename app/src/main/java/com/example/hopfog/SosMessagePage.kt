@@ -38,7 +38,7 @@ fun SosMessagePage(
 
     // Get the connection status from the ViewModel
     val connectionStatus by chatViewModel.connectionStatus.collectAsState()
-    val isConnected = connectionStatus is ConnectionStatus.Connected
+    val isConnected = connectionStatus is ConnectionStatus.Ready
 
     val quickReplies = listOf(
         "I am safe.", "Need medical help.",
@@ -85,7 +85,7 @@ fun SosMessagePage(
                             onClick = {
                                 // REVISED: Use the new sendMessage signature
                                 if (isConnected) {
-                                    chatViewModel.sendMessage(context, reply)
+                                    chatViewModel.sendMessage(context, text, chatViewModel.contactName.value)
                                 }
                             },
                             enabled = isConnected, // Button is enabled only when connected
@@ -126,7 +126,7 @@ fun SosMessagePage(
                         onClick = {
                             // REVISED: Use the new sendMessage signature
                             if (isConnected && text.isNotBlank()) {
-                                chatViewModel.sendMessage(context, text)
+                                chatViewModel.sendMessage(context, text, chatViewModel.contactName.value)
                                 text = ""
                             }
                         },

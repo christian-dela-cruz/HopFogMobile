@@ -46,6 +46,4 @@ object SessionManager {
         editor.putBoolean(KEY_HAS_AGREED_SOS, hasAgreed)
         editor.apply()
     }
-
-
 }

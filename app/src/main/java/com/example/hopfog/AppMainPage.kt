@@ -6,6 +6,8 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -77,11 +79,14 @@ fun AppMainPage(
     LaunchedEffect(key1 = true) {
         // --- START OF FIX: START THE SERVICE HERE ---
         Log.d("AppMainPage", "Launching background services setup.")
-        val serviceIntent = Intent(context, MessageCheckService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+        val userId = SessionManager.getUserId(context)
+        if (userId != -1) {
+            val serviceIntent = Intent(context, MessageCheckService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
         }
         // --- END OF FIX ---
 
@@ -180,6 +185,8 @@ fun AppMainPage(
             NavHost(
                 navController = innerNavController,
                 startDestination = "home_content",
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
             ) {
                 composable("home_content") {
                     HomePageContent(
@@ -236,7 +243,11 @@ fun AppMainPage(
                     SettingsPage(
                         userViewModel = userViewModel,
                         navController = innerNavController,
-                        onLogoutClicked = onLogout
+                        onLogoutClicked = {
+                            val serviceIntent = Intent(context, MessageCheckService::class.java)
+                            context.stopService(serviceIntent)
+                            onLogout()
+                        }
                     )
                 }
                 composable(

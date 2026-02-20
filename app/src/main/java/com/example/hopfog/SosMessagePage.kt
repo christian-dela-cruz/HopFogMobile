@@ -47,8 +47,10 @@ fun SosMessagePage(
     )
 
     // This makes sure the timer is cancelled when you navigate away from this screen
-    DisposableEffect(Unit) {
+    DisposableEffect(conversationId) {
+        chatViewModel.startPolling(context, conversationId)
         onDispose {
+            chatViewModel.stopPolling()
             chatViewModel.cancelCooldown()
         }
     }

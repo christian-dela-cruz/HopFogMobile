@@ -40,7 +40,10 @@ class MessageCheckService : Service() {
     }
 
     private suspend fun checkForNewMessages() {
-        // We need a new NetworkManager function for this
+        // Don't check if no user is logged in
+        val userId = SessionManager.getUserId(this)
+        if (userId == -1) return
+
         val newMessages = NetworkManager.getNewMessages(this, lastCheckedMessageId)
 
         for (message in newMessages) {

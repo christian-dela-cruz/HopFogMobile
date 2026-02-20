@@ -8,6 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 // Helper class to represent the cooldown state
@@ -35,6 +36,7 @@ class ChatViewModel : ViewModel() {
     val cooldownState = _cooldownState.asStateFlow()
 
     private var cooldownJob: Job? = null
+    private var pollingJob: Job? = null
     // --- END OF NEW STATE ---
 
     fun loadConversations(context: Context) {
@@ -68,7 +70,7 @@ class ChatViewModel : ViewModel() {
                 // The server gave a response
                 if (response.success) {
                     // 2. If the server says success, start the client-side cooldown
-                    startCooldown(30)
+                    startCooldown(10)
                     // And refresh the message list immediately
                     _messages.value = NetworkManager.getMessages(context, conversationId)
                 } else {
@@ -98,5 +100,24 @@ class ChatViewModel : ViewModel() {
     fun cancelCooldown() {
         cooldownJob?.cancel()
         _cooldownState.value = CooldownState.Ready
+    }
+
+    fun startPolling(context: Context, conversationId: Int) {
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
+            while (isActive) {
+                delay(3000) // Poll every 3 seconds
+                try {
+                    _messages.value = NetworkManager.getMessages(context, conversationId)
+                } catch (e: Exception) {
+                    Log.e("ChatViewModel", "Polling error: ${e.message}")
+                }
+            }
+        }
+    }
+
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 }

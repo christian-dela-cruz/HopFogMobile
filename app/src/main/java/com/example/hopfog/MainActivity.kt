@@ -3,6 +3,8 @@ package com.example.hopfog
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +38,12 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val userViewModel: UserViewModel = viewModel()
 
-                NavHost(navController = navController, startDestination = "landing") {
+                NavHost(
+                    navController = navController,
+                    startDestination = "landing",
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                ) {
                     composable("landing") {
                         LandingPage(onGetStartedClicked = { navController.navigate("login") })
                     }

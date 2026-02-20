@@ -38,6 +38,7 @@ import com.example.hopfog.ui.theme.HopFogGreen
 import com.example.hopfog.ui.theme.HopFogRed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -52,8 +53,15 @@ fun AppMainPage(
     val chatViewModel: ChatViewModel = viewModel()
     val context = LocalContext.current
 
-    var isOnline by remember { mutableStateOf(true) }
+    var isOnline by remember { mutableStateOf(false) }
     var showStatusPopup by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            isOnline = NetworkManager.checkStatus()
+            delay(10_000)
+        }
+    }
 
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -107,8 +115,7 @@ fun AppMainPage(
                     title = { Text("HopFog", fontWeight = FontWeight.Bold, fontSize = 32.sp) },
                     actions = {
                         IconButton(onClick = {
-                            isOnline = !isOnline
-                            showStatusPopup = true
+                            showStatusPopup = !showStatusPopup
                         }) {
                             Icon(
                                 imageVector = if (isOnline) Icons.Default.Sensors else Icons.Default.SensorsOff,
@@ -318,7 +325,7 @@ fun ConnectionStatusPopup(isVisible: Boolean, isOnline: Boolean, onDismiss: () -
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("• Status: ${if (isOnline) "Connected" else "Disconnected"}", color = Color.DarkGray)
-                Text("• Access Point: ${if (isOnline) "HopFogAP1" else "None"}", color = Color.DarkGray)
+                Text("• Access Point: ${if (isOnline) ESP32ConnectionManager.ESP32_SSID else "None"}", color = Color.DarkGray)
             }
         }
     }

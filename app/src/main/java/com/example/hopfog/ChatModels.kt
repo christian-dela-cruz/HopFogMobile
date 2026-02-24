@@ -94,13 +94,13 @@ fun formatTimestamp(value: String?): String {
     if (value.isNullOrBlank()) return ""
     return try {
         if (value.all { it.isDigit() }) {
-            val instant = java.time.Instant.ofEpochSecond(value.toLong())
-            val dateTime = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault())
-            val today = java.time.LocalDate.now()
-            if (dateTime.toLocalDate() == today) {
-                dateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            val date = java.util.Date(value.toLong() * 1000L)
+            val todayFmt = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault())
+            val isToday = todayFmt.format(date) == todayFmt.format(java.util.Date())
+            if (isToday) {
+                java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(date)
             } else {
-                dateTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, HH:mm"))
+                java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.getDefault()).format(date)
             }
         } else {
             // Try to extract time portion from date string like "2024-02-25 14:30:00"

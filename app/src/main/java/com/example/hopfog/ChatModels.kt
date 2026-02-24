@@ -84,3 +84,29 @@ data class SelectableUser(
     @SerialName("username")
     val username: String
 )
+
+/**
+ * Formats a timestamp string for display. Handles both Unix epoch seconds
+ * (numeric strings from ESP32) and date strings (e.g., "2024-02-25 14:30:00").
+ * Returns "HH:mm" for today's timestamps, "MMM dd, HH:mm" for older dates.
+ */
+fun formatTimestamp(value: String?): String {
+    if (value.isNullOrBlank()) return ""
+    return try {
+        if (value.all { it.isDigit() }) {
+            val instant = java.time.Instant.ofEpochSecond(value.toLong())
+            val dateTime = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault())
+            val today = java.time.LocalDate.now()
+            if (dateTime.toLocalDate() == today) {
+                dateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            } else {
+                dateTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, HH:mm"))
+            }
+        } else {
+            // Try to extract time portion from date string like "2024-02-25 14:30:00"
+            value.split(" ").getOrNull(1)?.substringBeforeLast(":") ?: value
+        }
+    } catch (e: Exception) {
+        value
+    }
+}

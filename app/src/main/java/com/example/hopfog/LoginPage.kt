@@ -164,6 +164,16 @@ fun LoginPage(
                         }
                 }
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Don't have an account? Ask your community admin to create one for you.",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
         }
     }
 }

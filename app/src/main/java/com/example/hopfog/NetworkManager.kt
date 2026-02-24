@@ -12,10 +12,12 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
+import java.net.ConnectException
 
 object NetworkManager {
 
-    private const val BASE_URL = "http://192.168.4.1"
+    private const val BASE_URL = "http://hopfog.com"
+    private const val CONNECTION_ERROR_MSG = "Cannot reach HopFog server. Make sure you're connected to HopFog-Network WiFi."
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -56,6 +58,9 @@ object NetworkManager {
                 context.toast("Login failed: ${json.optString("message", "Invalid credentials")}")
                 null
             }
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            null
         } catch (e: Exception) {
             context.toast("Network error: ${e.message}")
             null
@@ -68,6 +73,9 @@ object NetworkManager {
             client.get("$BASE_URL/conversations") {
                 parameter("user_id", userId)
             }.body()
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            emptyList()
         } catch (e: Exception) {
             context.toast("Failed to load conversations: ${e.message}")
             emptyList()
@@ -81,6 +89,9 @@ object NetworkManager {
                 parameter("conversation_id", conversationId)
                 parameter("user_id", userId)
             }.body()
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            emptyList()
         } catch (e: Exception) {
             context.toast("Failed to load messages: ${e.message}")
             emptyList()
@@ -99,6 +110,9 @@ object NetworkManager {
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }.body()
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            null
         } catch (e: Exception) {
             context.toast("Failed to send message: ${e.message}")
             null
@@ -111,6 +125,9 @@ object NetworkManager {
             client.get("$BASE_URL/users") {
                 parameter("user_id", userId)
             }.body()
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            emptyList()
         } catch (e: Exception) {
             context.toast("Failed to load users: ${e.message}")
             emptyList()
@@ -128,6 +145,9 @@ object NetworkManager {
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }.body()
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            null
         } catch (e: Exception) {
             context.toast("Failed to create chat: ${e.message}")
             null
@@ -144,6 +164,9 @@ object NetworkManager {
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }.body()
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            null
         } catch (e: Exception) {
             context.toast("Failed to create SOS chat: ${e.message}")
             null
@@ -157,6 +180,8 @@ object NetworkManager {
                 parameter("last_id", lastMessageId)
                 parameter("user_id", userId)
             }.body()
+        } catch (e: ConnectException) {
+            emptyList()
         } catch (e: Exception) {
             emptyList()
         }
@@ -180,6 +205,9 @@ object NetworkManager {
                 context.toast("Failed to save SOS agreement")
             }
             success
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            false
         } catch (e: Exception) {
             context.toast("Failed to agree to SOS: ${e.message}")
             false
@@ -206,6 +234,9 @@ object NetworkManager {
                 context.toast("Failed to change password: ${json.optString("message", "Unknown error")}")
             }
             success
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            false
         } catch (e: Exception) {
             context.toast("Network error: ${e.message}")
             false

@@ -134,10 +134,7 @@ fun ConversationItem(conversation: ChatConversation, onClick: () -> Unit) {
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                // A safer way to handle potential timestamp format issues
-                text = conversation.timestamp?.let { ts ->
-                    ts.split(" ").getOrNull(1)?.substringBeforeLast(":") ?: ""
-                } ?: "",
+                text = formatTimestamp(conversation.timestamp),
                 color = HopFogBlue,
                 fontSize = 12.sp
             )

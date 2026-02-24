@@ -13,8 +13,8 @@ import org.json.JSONObject
 
 object ESP32ConnectionManager {
 
-    const val ESP32_SSID = "HopFog-AP"
-    private const val STATUS_URL = "http://192.168.4.1/status"
+    const val ESP32_SSID = "HopFog-Network"
+    private const val STATUS_URL = "http://hopfog.com/status"
     private const val PING_TIMEOUT_MS = 3000L
 
     private val _connectionState = MutableStateFlow(false)
@@ -49,4 +49,16 @@ object ESP32ConnectionManager {
     }
 
     fun getConnectionStatus(): StateFlow<Boolean> = connectionState
+
+    /**
+     * Checks if the device is connected to the HopFog-Network WiFi.
+     * Returns true if connected to the correct SSID, false otherwise.
+     */
+    suspend fun ensureWifiConnection(context: Context): Boolean {
+        val connected = isConnectedToESP32(context)
+        if (!connected) {
+            _connectionState.value = false
+        }
+        return connected
+    }
 }

@@ -1,0 +1,158 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/AppMainPage.kt</file>
+  <line>373</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.AppMainPageKt void PlaceholderPage(java.lang.String pageName)" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Function &quot;PlaceholderPage&quot; is never used</description>
+  <highlighted_element>PlaceholderPage</highlighted_element>
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>15</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>9</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="class" FQNAME="com.example.hopfog.SendMessageRequest" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Class &quot;SendMessageRequest&quot; is never used</description>
+  <highlighted_element>SendMessageRequest</highlighted_element>
+  <language>kotlin</language>
+  <offset>11</offset>
+  <length>18</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>53</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="class" FQNAME="com.example.hopfog.ChangePasswordRequest" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Class &quot;ChangePasswordRequest&quot; is never used</description>
+  <highlighted_element>ChangePasswordRequest</highlighted_element>
+  <language>kotlin</language>
+  <offset>11</offset>
+  <length>21</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>61</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="class" FQNAME="com.example.hopfog.GenericErrorResponse" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Class &quot;GenericErrorResponse&quot; is never used</description>
+  <highlighted_element>GenericErrorResponse</highlighted_element>
+  <language>kotlin</language>
+  <offset>11</offset>
+  <length>20</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>76</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="class" FQNAME="com.example.hopfog.ErrorResponse" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Class &quot;ErrorResponse&quot; is never used</description>
+  <highlighted_element>ErrorResponse</highlighted_element>
+  <language>kotlin</language>
+  <offset>11</offset>
+  <length>13</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatViewModel.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="field" FQNAME="com.example.hopfog.ChatViewModel contactName" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Property &quot;contactName&quot; is never used</description>
+  <highlighted_element>contactName</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>11</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ESP32ConnectionManager.kt</file>
+  <line>38</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ESP32ConnectionManager java.lang.Object checkESP32Reachable(kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Function &quot;checkESP32Reachable&quot; is never used</description>
+  <highlighted_element>checkESP32Reachable</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>19</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ESP32ConnectionManager.kt</file>
+  <line>51</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ESP32ConnectionManager kotlinx.coroutines.flow.StateFlow&lt;java.lang.Boolean&gt; getConnectionStatus()" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Function &quot;getConnectionStatus&quot; is never used</description>
+  <highlighted_element>getConnectionStatus</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>19</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ESP32ConnectionManager.kt</file>
+  <line>57</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ESP32ConnectionManager java.lang.Object ensureWifiConnection(android.content.Context context, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Function &quot;ensureWifiConnection&quot; is never used</description>
+  <highlighted_element>ensureWifiConnection</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>20</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object registerUser(android.content.Context context, java.lang.String username, java.lang.String email, java.lang.String password, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Function &quot;registerUser&quot; is never used</description>
+  <highlighted_element>registerUser</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SessionManager.kt</file>
+  <line>21</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SessionManager void clearSession(android.content.Context context)" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Function &quot;clearSession&quot; is never used</description>
+  <highlighted_element>clearSession</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SessionManager.kt</file>
+  <line>31</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SessionManager java.lang.String getUsername(android.content.Context context)" />
+  <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+  <description>Function &quot;getUsername&quot; is never used</description>
+  <highlighted_element>getUsername</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>11</length>
+</problem>
+</problems>

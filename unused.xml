@@ -1,0 +1,372 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/AppMainPage.kt</file>
+  <line>372</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.AppMainPageKt void PlaceholderPage(java.lang.String pageName)" />
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>11</length>
+  <highlighted_element>@Composable</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Method is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>9</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SendMessageRequest SendMessageRequest(int conversationId, java.lang.String messageText)" />
+  <language>kotlin</language>
+  <offset>29</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>17</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ChatConversation ChatConversation(int conversationId, java.lang.String contactName, java.lang.String lastMessage, java.lang.String timestamp)" />
+  <language>kotlin</language>
+  <offset>27</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>29</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.Message Message(int messageId, java.lang.String messageText, java.lang.String sentAt, int senderId, boolean isFromCurrentUser, java.lang.String senderUsername)" />
+  <language>kotlin</language>
+  <offset>18</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>45</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SosChatResponse SosChatResponse(int conversationId, java.lang.String contactName)" />
+  <language>kotlin</language>
+  <offset>26</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>53</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ChangePasswordRequest ChangePasswordRequest(java.lang.String oldPassword, java.lang.String newPassword)" />
+  <language>kotlin</language>
+  <offset>32</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>61</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.GenericErrorResponse GenericErrorResponse(java.lang.String error)" />
+  <language>kotlin</language>
+  <offset>31</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>66</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SendMessageResponse SendMessageResponse(boolean success, java.lang.String message, int secondsRemaining)" />
+  <language>kotlin</language>
+  <offset>30</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>76</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ErrorResponse ErrorResponse(java.lang.String error)" />
+  <language>kotlin</language>
+  <offset>24</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>81</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SelectableUser SelectableUser(int id, java.lang.String username)" />
+  <language>kotlin</language>
+  <offset>25</offset>
+  <length>1</length>
+  <highlighted_element>(</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Constructor is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatViewModel.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="field" FQNAME="com.example.hopfog.ChatViewModel contactName" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>44</length>
+  <highlighted_element>val contactName = _contactName.asStateFlow()</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Field is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ESP32ConnectionManager.kt</file>
+  <line>38</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ESP32ConnectionManager java.lang.Object checkESP32Reachable(kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>44</length>
+  <highlighted_element>suspend fun checkESP32Reachable(): Boolean {</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Method is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ESP32ConnectionManager.kt</file>
+  <line>51</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ESP32ConnectionManager kotlinx.coroutines.flow.StateFlow&lt;java.lang.Boolean&gt; getConnectionStatus()" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>63</length>
+  <highlighted_element>fun getConnectionStatus(): StateFlow&lt;Boolean&gt; = connectionState</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Method is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ESP32ConnectionManager.kt</file>
+  <line>53</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.ESP32ConnectionManager java.lang.Object ensureWifiConnection(android.content.Context context, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>3</length>
+  <highlighted_element>/**</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Method is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object registerUser(android.content.Context context, java.lang.String username, java.lang.String email, java.lang.String password, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>104</length>
+  <highlighted_element>suspend fun registerUser(context: Context, username: String, email: String, password: String): Boole...</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Method is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object registerUser(android.content.Context context, java.lang.String username, java.lang.String email, java.lang.String password, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="unused" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused declaration</problem_class>
+  <hints>
+    <hint value="username" />
+  </hints>
+  <description>Parameter &lt;code&gt;username&lt;/code&gt; is not used</description>
+  <highlighted_element>username</highlighted_element>
+  <language>kotlin</language>
+  <offset>47</offset>
+  <length>8</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object registerUser(android.content.Context context, java.lang.String username, java.lang.String email, java.lang.String password, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="unused" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused declaration</problem_class>
+  <hints>
+    <hint value="email" />
+  </hints>
+  <description>Parameter &lt;code&gt;email&lt;/code&gt; is not used</description>
+  <highlighted_element>email</highlighted_element>
+  <language>kotlin</language>
+  <offset>65</offset>
+  <length>5</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object registerUser(android.content.Context context, java.lang.String username, java.lang.String email, java.lang.String password, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="unused" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused declaration</problem_class>
+  <hints>
+    <hint value="password" />
+  </hints>
+  <description>Parameter &lt;code&gt;password&lt;/code&gt; is not used</description>
+  <highlighted_element>password</highlighted_element>
+  <language>kotlin</language>
+  <offset>80</offset>
+  <length>8</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>246</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object runMessageCleanup(android.content.Context context, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="unused" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused declaration</problem_class>
+  <hints>
+    <hint value="context" />
+  </hints>
+  <description>Parameter &lt;code&gt;context&lt;/code&gt; is not used</description>
+  <highlighted_element>context</highlighted_element>
+  <language>kotlin</language>
+  <offset>34</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SessionManager.kt</file>
+  <line>20</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SessionManager void clearSession(android.content.Context context)" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>28</length>
+  <highlighted_element>// Clears all data on logout</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Method is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SessionManager.kt</file>
+  <line>30</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SessionManager java.lang.String getUsername(android.content.Context context)" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>51</length>
+  <highlighted_element>// Gets the locally stored username (empty if none)</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Method is never used.</description>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NotificationHelper.kt</file>
+  <line>14</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="class" FQNAME="com.example.hopfog.NotificationHelper.Companion" />
+  <language>kotlin</language>
+  <offset>4</offset>
+  <length>18</length>
+  <highlighted_element>companion object {</highlighted_element>
+  <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+  <hints>
+    <hint value="comment" />
+    <hint value="delete" />
+  </hints>
+  <description>Class is never used.</description>
+</problem>
+</problems>

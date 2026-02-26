@@ -1,0 +1,38 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/gradle/libs.versions.toml</file>
+  <line>32</line>
+  <module>HopFog</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/gradle/libs.versions.toml" />
+  <problem_class id="UnusedVersionCatalogEntry" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused version catalog entry</problem_class>
+  <description>Dependency alias 'ktor-client-core' is not used in build scripts</description>
+  <highlighted_element>ktor-client-core</highlighted_element>
+  <language>TOML</language>
+  <offset>0</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/gradle/libs.versions.toml</file>
+  <line>33</line>
+  <module>HopFog</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/gradle/libs.versions.toml" />
+  <problem_class id="UnusedVersionCatalogEntry" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused version catalog entry</problem_class>
+  <description>Dependency alias 'ktor-client-cio' is not used in build scripts</description>
+  <highlighted_element>ktor-client-cio</highlighted_element>
+  <language>TOML</language>
+  <offset>0</offset>
+  <length>15</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/gradle/libs.versions.toml</file>
+  <line>34</line>
+  <module>HopFog</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/gradle/libs.versions.toml" />
+  <problem_class id="UnusedVersionCatalogEntry" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused version catalog entry</problem_class>
+  <description>Dependency alias 'androidx-appcompat' is not used in build scripts</description>
+  <highlighted_element>androidx-appcompat</highlighted_element>
+  <language>TOML</language>
+  <offset>0</offset>
+  <length>18</length>
+</problem>
+</problems>

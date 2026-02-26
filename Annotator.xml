@@ -1,0 +1,16 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>112</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="Annotator" severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Annotator</problem_class>
+  <hints />
+  <description>Expecting a top level declaration #loc</description>
+  <highlighted_element>s</highlighted_element>
+  <language>kotlin</language>
+  <offset>1</offset>
+  <length>1</length>
+</problem>
+</problems>

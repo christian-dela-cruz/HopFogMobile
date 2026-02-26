@@ -59,16 +59,16 @@ class MainActivity : ComponentActivity() {
                             onSignUpClicked = { navController.navigate("register") }
                         )
                     }
-                    composable("register") {
-                        RegisterPage(
-                            onSignUpClicked = {
-                                navController.navigate("login") {
-                                    popUpTo("landing") { inclusive = true }
-                                }
-                            },
-                            onBackClicked = { navController.popBackStack() }
-                        )
-                    }
+//                    composable("register") {
+//                        RegisterPage(
+//                            onSignUpClicked = {
+//                                navController.navigate("login") {
+//                                    popUpTo("landing") { inclusive = true }
+//                                }
+//                            },
+//                            onBackClicked = { navController.popBackStack() }
+//                        )
+//                    }
                     composable("app_main") {
                         AppMainPage(
                             userViewModel = userViewModel,

@@ -1,0 +1,128 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>97</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.Instant#ofEpochSecond&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>ofEpochSecond</highlighted_element>
+  <language>kotlin</language>
+  <offset>44</offset>
+  <length>13</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>98</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.LocalDateTime#ofInstant&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>ofInstant</highlighted_element>
+  <language>kotlin</language>
+  <offset>51</offset>
+  <length>9</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>98</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.ZoneId#systemDefault&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>systemDefault</highlighted_element>
+  <language>kotlin</language>
+  <offset>87</offset>
+  <length>13</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>99</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.LocalDate#now&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>now</highlighted_element>
+  <language>kotlin</language>
+  <offset>44</offset>
+  <length>3</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>100</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.LocalDateTime#toLocalDate&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>toLocalDate</highlighted_element>
+  <language>kotlin</language>
+  <offset>25</offset>
+  <length>11</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>101</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.LocalDateTime#format&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>format</highlighted_element>
+  <language>kotlin</language>
+  <offset>25</offset>
+  <length>6</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>101</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.format.DateTimeFormatter#ofPattern&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>ofPattern</highlighted_element>
+  <language>kotlin</language>
+  <offset>67</offset>
+  <length>9</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>103</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.LocalDateTime#format&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>format</highlighted_element>
+  <language>kotlin</language>
+  <offset>25</offset>
+  <length>6</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt</file>
+  <line>103</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/ChatModels.kt" />
+  <problem_class id="AndroidLintNewApi" severity="ERROR" attribute_key="ERRORS_ATTRIBUTES">Calling new methods on older versions</problem_class>
+  <hints />
+  <description>&lt;html&gt;Call requires API level 26 (current min is 24): &lt;code&gt;java.time.format.DateTimeFormatter#ofPattern&lt;/code&gt;&lt;/html&gt;</description>
+  <highlighted_element>ofPattern</highlighted_element>
+  <language>kotlin</language>
+  <offset>67</offset>
+  <length>9</length>
+</problem>
+</problems>

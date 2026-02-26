@@ -1,0 +1,145 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/AccountPage.kt</file>
+  <line>13</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/AccountPage.kt" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>Remove deprecated symbol import</description>
+  <highlighted_element>import androidx.compose.material3.Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>41</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/AccountPage.kt</file>
+  <line>86</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.AccountPageKt void SettingItem(java.lang.String title, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onClick)" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Divider(Modifier = ..., Dp = ..., Color = ...): Unit' is deprecated. Renamed to HorizontalDivider</description>
+  <highlighted_element>Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/HomePage.kt</file>
+  <line>86</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.HomePageKt void ActionButtons(kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onSendSosClick, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onNewMessageClick)" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Message: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Message</description>
+  <highlighted_element>Message</highlighted_element>
+  <language>kotlin</language>
+  <offset>33</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/LoginPage.kt</file>
+  <line>62</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.LoginPageKt void LoginPage(com.example.hopfog.UserViewModel userViewModel, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onLoginClicked, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onSignUpClicked, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onForgotPasswordClicked)" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Divider(Modifier = ..., Dp = ..., Color = ...): Unit' is deprecated. Renamed to HorizontalDivider</description>
+  <highlighted_element>Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>12</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NotificationsPage.kt</file>
+  <line>6</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NotificationsPage.kt" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>Remove deprecated symbol import</description>
+  <highlighted_element>import androidx.compose.material.icons.filled.VolumeUp</highlighted_element>
+  <language>kotlin</language>
+  <offset>0</offset>
+  <length>54</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NotificationsPage.kt</file>
+  <line>44</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NotificationsPageKt void NotificationsPage()" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Divider(Modifier = ..., Dp = ..., Color = ...): Unit' is deprecated. Renamed to HorizontalDivider</description>
+  <highlighted_element>Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NotificationsPage.kt</file>
+  <line>46</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NotificationsPageKt void NotificationsPage()" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.VolumeUp</description>
+  <highlighted_element>VolumeUp</highlighted_element>
+  <language>kotlin</language>
+  <offset>41</offset>
+  <length>8</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NotificationsPage.kt</file>
+  <line>51</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NotificationsPageKt void NotificationsPage()" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Divider(Modifier = ..., Dp = ..., Color = ...): Unit' is deprecated. Renamed to HorizontalDivider</description>
+  <highlighted_element>Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SettingsPage.kt</file>
+  <line>73</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SettingsPageKt void SettingsPage(com.example.hopfog.UserViewModel userViewModel, androidx.navigation.NavController navController, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onLogoutClicked)" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Divider(Modifier = ..., Dp = ..., Color = ...): Unit' is deprecated. Renamed to HorizontalDivider</description>
+  <highlighted_element>Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SettingsPage.kt</file>
+  <line>86</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SettingsPageKt void SettingsPage(com.example.hopfog.UserViewModel userViewModel, androidx.navigation.NavController navController, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onLogoutClicked)" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Divider(Modifier = ..., Dp = ..., Color = ...): Unit' is deprecated. Renamed to HorizontalDivider</description>
+  <highlighted_element>Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SettingsPage.kt</file>
+  <line>90</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SettingsPageKt void SettingsPage(com.example.hopfog.UserViewModel userViewModel, androidx.navigation.NavController navController, kotlin.jvm.functions.Function0&lt;kotlin.Unit&gt; onLogoutClicked)" />
+  <problem_class id="KotlinDeprecation" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of redundant or deprecated syntax or deprecated symbols</problem_class>
+  <description>'Divider(Modifier = ..., Dp = ..., Color = ...): Unit' is deprecated. Renamed to HorizontalDivider</description>
+  <highlighted_element>Divider</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>7</length>
+</problem>
+</problems>

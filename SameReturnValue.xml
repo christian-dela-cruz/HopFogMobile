@@ -1,0 +1,30 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>32</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object registerUser(android.content.Context context, java.lang.String username, java.lang.String email, java.lang.String password, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="SameReturnValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method always returns the same value</problem_class>
+  <hints />
+  <description>Method &lt;code&gt;registerUser()&lt;/code&gt; always returns &lt;code&gt;false&lt;/code&gt;</description>
+  <highlighted_element>registerUser</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/NetworkManager.kt</file>
+  <line>246</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.NetworkManager java.lang.Object runMessageCleanup(android.content.Context context, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+  <problem_class id="SameReturnValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method always returns the same value</problem_class>
+  <hints />
+  <description>Method &lt;code&gt;runMessageCleanup()&lt;/code&gt; always returns &lt;code&gt;true&lt;/code&gt;</description>
+  <highlighted_element>runMessageCleanup</highlighted_element>
+  <language>kotlin</language>
+  <offset>16</offset>
+  <length>17</length>
+</problem>
+</problems>

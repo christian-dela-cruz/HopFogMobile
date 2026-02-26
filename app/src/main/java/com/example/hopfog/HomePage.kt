@@ -65,7 +65,7 @@ fun HomePageContent(
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    text = "SOS Announcements",
+                    text = "Announcements",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,

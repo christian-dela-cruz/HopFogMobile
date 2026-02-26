@@ -144,7 +144,7 @@ fun LoginPage(
             ) {
                 Text("Sign In", color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Don't have an account? Ask your community admin to create one for you.",

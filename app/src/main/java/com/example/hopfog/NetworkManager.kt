@@ -250,6 +250,7 @@ object NetworkManager {
             context.toast(CONNECTION_ERROR_MSG)
             emptyList()
         } catch (e: Exception) {
+            context.toast("Failed to load announcements: ${e.message}")
             emptyList()
         }
     }

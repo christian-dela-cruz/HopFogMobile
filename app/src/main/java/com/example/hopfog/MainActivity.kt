@@ -56,8 +56,7 @@ class MainActivity : ComponentActivity() {
                                     popUpTo("landing") { inclusive = true }
                                 }
                             },
-                            onSignUpClicked = { navController.navigate("register") },
-                            onForgotPasswordClicked = { /* TODO */ }
+                            onSignUpClicked = { navController.navigate("register") }
                         )
                     }
                     composable("register") {

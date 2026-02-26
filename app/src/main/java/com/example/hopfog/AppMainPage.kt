@@ -223,7 +223,8 @@ fun AppMainPage(
                                     Toast.makeText(context, "Could not create SOS chat. Please try again.", Toast.LENGTH_LONG).show()
                                 }
                             }
-                        }
+                        },
+                        onBack = { innerNavController.popBackStack() }
                     )
                 }
 

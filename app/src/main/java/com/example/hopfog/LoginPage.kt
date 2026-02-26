@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.compose.runtime.rememberCoroutineScope
+import android.content.Context
 import android.widget.Toast
 import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogBlue
@@ -30,15 +31,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun LoginPage(
     userViewModel: UserViewModel = viewModel(),
     onLoginClicked: () -> Unit,
-    onSignUpClicked: () -> Unit,
-    onForgotPasswordClicked: () -> Unit
+    onSignUpClicked: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("HopFog_RememberMe", Context.MODE_PRIVATE)
+
+    var email by remember { mutableStateOf(prefs.getString("saved_username", "") ?: "") }
+    var password by remember { mutableStateOf(prefs.getString("saved_password", "") ?: "") }
+    var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember_me", false)) }
 
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize(), color = HopFogBackground) {
         Column(
@@ -94,8 +96,7 @@ fun LoginPage(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
@@ -109,9 +110,6 @@ fun LoginPage(
                     )
                     Text("Remember Me", color = Color.White)
                 }
-                TextButton(onClick = onForgotPasswordClicked) {
-                    Text("Forgot Password?", color = HopFogBlue)
-                }
             }
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -123,6 +121,15 @@ fun LoginPage(
                         coroutineScope.launch {
                             val resultJson = NetworkManager.loginUser(context, email, password)
                             if (resultJson != null) {
+                                val editor = prefs.edit()
+                                if (rememberMe) {
+                                    editor.putString("saved_username", email)
+                                    editor.putString("saved_password", password)
+                                    editor.putBoolean("remember_me", true)
+                                } else {
+                                    editor.clear()
+                                }
+                                editor.apply()
                                 userViewModel.onLoginSuccess(resultJson)
                                 onLoginClicked()
                             }
@@ -158,7 +165,6 @@ fun LoginPagePreview() {
     HopFogTheme {
         LoginPage(
             onLoginClicked = {},
-            onSignUpClicked = {},
-            onForgotPasswordClicked = {})
+            onSignUpClicked = {})
     }
 }

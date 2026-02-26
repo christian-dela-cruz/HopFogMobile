@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,7 +26,7 @@ import kotlinx.coroutines.withContext
 
 
 @Composable
-fun SosAgreementPage(onAgreed: () -> Unit) {
+fun SosAgreementPage(onAgreed: () -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope() // <-- FIX 3: Moved scope to the top level
@@ -36,13 +38,27 @@ fun SosAgreementPage(onAgreed: () -> Unit) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            "SOS Feature Terms of Use",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            textAlign = TextAlign.Center
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+            Text(
+                "SOS Feature Terms of Use",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(48.dp)) // Balance the row
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         Column(

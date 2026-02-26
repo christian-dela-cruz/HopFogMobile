@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,9 +38,18 @@ fun HomePageContent(
 ) {
     val context = LocalContext.current
     var announcements by remember { mutableStateOf<List<Announcement>>(emptyList()) }
+    var sortNewestFirst by remember { mutableStateOf(true) }
 
     LaunchedEffect(isOnline) {
         announcements = NetworkManager.getAnnouncements(context)
+    }
+
+    val sortedAnnouncements = remember(announcements, sortNewestFirst) {
+        if (sortNewestFirst) {
+            announcements.sortedByDescending { parseTimestampToMillis(it.createdAt) }
+        } else {
+            announcements.sortedBy { parseTimestampToMillis(it.createdAt) }
+        }
     }
 
     Column(
@@ -64,16 +74,28 @@ fun HomePageContent(
                     onNewMessageClick = onNewMessageClick
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                Text(
-                    text = "Announcements",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Announcements",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    IconButton(onClick = { sortNewestFirst = !sortNewestFirst }) {
+                        Icon(
+                            imageVector = if (sortNewestFirst) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                            contentDescription = if (sortNewestFirst) "Showing newest first" else "Showing oldest first",
+                            tint = Color.DarkGray
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                if (announcements.isNotEmpty()) {
-                    AnnouncementList(announcements = announcements)
+                if (sortedAnnouncements.isNotEmpty()) {
+                    AnnouncementList(announcements = sortedAnnouncements)
                 } else {
                     NoAnnouncementsMessage()
                 }

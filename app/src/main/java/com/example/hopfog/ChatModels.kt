@@ -98,6 +98,25 @@ data class Announcement(
 )
 
 /**
+ * Parses a timestamp string into epoch milliseconds for sorting.
+ * Handles both Unix epoch seconds (numeric strings) and date strings (e.g., "2024-02-25 14:30:00").
+ * Returns 0 if parsing fails.
+ */
+fun parseTimestampToMillis(value: String?): Long {
+    if (value.isNullOrBlank()) return 0L
+    return try {
+        if (value.all { it.isDigit() }) {
+            value.toLong() * 1000L
+        } else {
+            java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                .parse(value)?.time ?: 0L
+        }
+    } catch (e: Exception) {
+        0L
+    }
+}
+
+/**
  * Formats a timestamp string for display. Handles both Unix epoch seconds
  * (numeric strings from ESP32) and date strings (e.g., "2024-02-25 14:30:00").
  * Returns "HH:mm" for today's timestamps, "MMM dd, HH:mm" for older dates.

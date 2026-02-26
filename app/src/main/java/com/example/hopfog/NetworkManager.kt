@@ -243,6 +243,17 @@ object NetworkManager {
         }
     }
 
+    suspend fun getAnnouncements(context: Context): List<Announcement> {
+        return try {
+            client.get("$BASE_URL/announcements").body()
+        } catch (e: ConnectException) {
+            context.toast(CONNECTION_ERROR_MSG)
+            emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun runMessageCleanup(context: Context): Boolean {
         return true
     }

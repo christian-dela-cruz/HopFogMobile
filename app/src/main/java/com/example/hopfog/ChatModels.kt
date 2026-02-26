@@ -85,6 +85,18 @@ data class SelectableUser(
     val username: String
 )
 
+@Serializable
+data class Announcement(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("title")
+    val title: String,
+    @SerialName("message")
+    val message: String,
+    @SerialName("created_at")
+    val createdAt: String? = null
+)
+
 /**
  * Formats a timestamp string for display. Handles both Unix epoch seconds
  * (numeric strings from ESP32) and date strings (e.g., "2024-02-25 14:30:00").

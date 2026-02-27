@@ -1,5 +1,6 @@
 package com.example.hopfog
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,10 +9,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,10 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
-private enum class AnnouncementSortMode(val label: String) {
-    NEWEST_FIRST("Newest First"),
-    OLDEST_FIRST("Oldest First"),
-    PRIORITY("Priority")
+private enum class AnnouncementSortMode(val label: String, val icon: ImageVector) {
+    NEWEST_FIRST("Newest", Icons.Default.ArrowDownward),
+    OLDEST_FIRST("Oldest", Icons.Default.ArrowUpward),
+    PRIORITY("Priority", Icons.Default.PriorityHigh)
 }
 
 @Composable
@@ -47,7 +47,6 @@ fun HomePageContent(
     val context = LocalContext.current
     var announcements by remember { mutableStateOf<List<Announcement>>(emptyList()) }
     var sortMode by remember { mutableStateOf(AnnouncementSortMode.NEWEST_FIRST) }
-    var showSortMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(isOnline) {
         announcements = NetworkManager.getAnnouncements(context)
@@ -100,42 +99,34 @@ fun HomePageContent(
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
-                    Box {
-                        IconButton(onClick = { showSortMenu = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Sort,
-                                contentDescription = "Sort announcements",
-                                tint = Color.DarkGray
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = showSortMenu,
-                            onDismissRequest = { showSortMenu = false }
-                        ) {
-                            AnnouncementSortMode.entries.forEach { mode ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = mode.label,
-                                            fontWeight = if (mode == sortMode) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    },
-                                    onClick = {
-                                        sortMode = mode
-                                        showSortMenu = false
-                                    },
-                                    leadingIcon = {
-                                        if (mode == sortMode) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = null,
-                                                tint = Color.Black
-                                            )
-                                        }
-                                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AnnouncementSortMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = mode == sortMode,
+                            onClick = { sortMode = mode },
+                            label = { Text(mode.label, fontSize = 13.sp) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = mode.icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
                                 )
-                            }
-                        }
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = HopFogBlue,
+                                selectedLabelColor = Color.Black,
+                                selectedLeadingIconColor = Color.Black
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                if (mode == sortMode) HopFogBlue else Color.Gray
+                            )
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))

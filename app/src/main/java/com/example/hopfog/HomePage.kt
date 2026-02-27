@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -30,6 +32,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
+private enum class AnnouncementSortMode(val label: String) {
+    NEWEST_FIRST("Newest First"),
+    OLDEST_FIRST("Oldest First"),
+    PRIORITY("Priority")
+}
+
 @Composable
 fun HomePageContent(
     isOnline: Boolean,
@@ -38,17 +46,24 @@ fun HomePageContent(
 ) {
     val context = LocalContext.current
     var announcements by remember { mutableStateOf<List<Announcement>>(emptyList()) }
-    var sortNewestFirst by remember { mutableStateOf(true) }
+    var sortMode by remember { mutableStateOf(AnnouncementSortMode.NEWEST_FIRST) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(isOnline) {
         announcements = NetworkManager.getAnnouncements(context)
     }
 
-    val sortedAnnouncements = remember(announcements, sortNewestFirst) {
-        if (sortNewestFirst) {
-            announcements.sortedByDescending { parseTimestampToMillis(it.createdAt) }
-        } else {
-            announcements.sortedBy { parseTimestampToMillis(it.createdAt) }
+    val sortedAnnouncements = remember(announcements, sortMode) {
+        when (sortMode) {
+            AnnouncementSortMode.NEWEST_FIRST ->
+                announcements.sortedByDescending { parseTimestampToMillis(it.createdAt) }
+            AnnouncementSortMode.OLDEST_FIRST ->
+                announcements.sortedBy { parseTimestampToMillis(it.createdAt) }
+            AnnouncementSortMode.PRIORITY ->
+                announcements.sortedWith(
+                    compareBy<Announcement> { announcementPriorityRank(it) }
+                        .thenByDescending { parseTimestampToMillis(it.createdAt) }
+                )
         }
     }
 
@@ -85,12 +100,42 @@ fun HomePageContent(
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
-                    IconButton(onClick = { sortNewestFirst = !sortNewestFirst }) {
-                        Icon(
-                            imageVector = if (sortNewestFirst) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
-                            contentDescription = if (sortNewestFirst) "Showing newest first" else "Showing oldest first",
-                            tint = Color.DarkGray
-                        )
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Sort,
+                                contentDescription = "Sort announcements",
+                                tint = Color.DarkGray
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
+                        ) {
+                            AnnouncementSortMode.entries.forEach { mode ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = mode.label,
+                                            fontWeight = if (mode == sortMode) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    onClick = {
+                                        sortMode = mode
+                                        showSortMenu = false
+                                    },
+                                    leadingIcon = {
+                                        if (mode == sortMode) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = Color.Black
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))

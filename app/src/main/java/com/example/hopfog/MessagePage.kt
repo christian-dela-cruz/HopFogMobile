@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.HopFogBlue
 
 @Composable
@@ -84,7 +85,9 @@ fun MessageInput(
     var text by remember { mutableStateOf("") }
 
     Row(
-        modifier = Modifier.padding(8.dp),
+        modifier = Modifier
+            .background(Color(0xFF2B2B2B))
+            .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
@@ -164,13 +167,23 @@ fun MessageBubble(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(backgroundColor, RoundedCornerShape(16.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        ) {
-            Text(text = message.messageText, color = textColor)
+        Column(modifier = Modifier.widthIn(max = 280.dp)) {
+            if (!message.isFromCurrentUser) {
+                Text(
+                    text = message.senderUsername,
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .background(backgroundColor, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(text = message.messageText, color = textColor)
+            }
         }
     }
 }

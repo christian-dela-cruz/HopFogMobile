@@ -98,6 +98,19 @@ data class Announcement(
 )
 
 /**
+ * Returns a priority rank for an announcement based on its title.
+ * Lower rank = higher priority: SOS (0) > Alerts (1) > Announcements/other (2).
+ */
+fun announcementPriorityRank(announcement: Announcement): Int {
+    val titleLower = announcement.title.lowercase()
+    return when {
+        titleLower.contains("sos") -> 0
+        titleLower.contains("alert") -> 1
+        else -> 2
+    }
+}
+
+/**
  * Parses a timestamp string into epoch milliseconds for sorting.
  * Handles both Unix epoch seconds (numeric strings) and date strings (e.g., "2024-02-25 14:30:00").
  * Returns 0 if parsing fails.

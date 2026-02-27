@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
 private enum class AnnouncementSortMode(val label: String, val icon: ImageVector) {
-    NEWEST_FIRST("Newest", Icons.Default.ArrowDownward),
-    OLDEST_FIRST("Oldest", Icons.Default.ArrowUpward),
+    NEWEST_FIRST("Newest", Icons.Default.KeyboardDoubleArrowDown),
+    OLDEST_FIRST("Oldest", Icons.Default.KeyboardDoubleArrowUp),
     PRIORITY("Priority", Icons.Default.PriorityHigh)
 }
 

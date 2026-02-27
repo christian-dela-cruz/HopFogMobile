@@ -10,8 +10,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.HopFogBlue
 
 private enum class ChatSortMode(val label: String, val icon: ImageVector) {
-    NEWEST_FIRST("Recent", Icons.Default.ArrowDownward),
-    OLDEST_FIRST("Oldest", Icons.Default.ArrowUpward)
+    NEWEST_FIRST("Newest", Icons.Default.KeyboardDoubleArrowDown),
+    OLDEST_FIRST("Oldest", Icons.Default.KeyboardDoubleArrowUp)
 }
 
 

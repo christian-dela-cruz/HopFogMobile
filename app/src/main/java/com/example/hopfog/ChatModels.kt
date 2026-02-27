@@ -100,12 +100,13 @@ data class Announcement(
 /**
  * Returns a priority rank for an announcement based on its title.
  * Lower rank = higher priority: SOS (0) > Alerts (1) > Announcements/other (2).
+ * Uses word-boundary matching to avoid false positives.
  */
 fun announcementPriorityRank(announcement: Announcement): Int {
     val titleLower = announcement.title.lowercase()
     return when {
-        titleLower.contains("sos") -> 0
-        titleLower.contains("alert") -> 1
+        Regex("\\bsos\\b").containsMatchIn(titleLower) -> 0
+        Regex("\\balert\\b").containsMatchIn(titleLower) -> 1
         else -> 2
     }
 }

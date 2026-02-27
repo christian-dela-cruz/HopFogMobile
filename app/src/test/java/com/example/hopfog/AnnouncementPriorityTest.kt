@@ -36,6 +36,20 @@ class AnnouncementPriorityTest {
     }
 
     @Test
+    fun priorityRank_noFalsePositive_sosSubstring() {
+        // "Prisoner Transport" should NOT match as SOS
+        val announcement = Announcement(1, "Prisoner Transport", "msg")
+        assertEquals(2, announcementPriorityRank(announcement))
+    }
+
+    @Test
+    fun priorityRank_noFalsePositive_alertSubstring() {
+        // "Ballert" should NOT match as Alert
+        val announcement = Announcement(1, "Ballert Street Closure", "msg")
+        assertEquals(2, announcementPriorityRank(announcement))
+    }
+
+    @Test
     fun prioritySorting_correctOrder() {
         val announcements = listOf(
             Announcement(1, "Community Meeting", "msg", "1708992000"),

@@ -12,6 +12,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +20,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,6 +50,8 @@ fun HomePageContent(
     val context = LocalContext.current
     var announcements by remember { mutableStateOf<List<Announcement>>(emptyList()) }
     var sortMode by remember { mutableStateOf(AnnouncementSortMode.NEWEST_FIRST) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(isOnline) {
         announcements = NetworkManager.getAnnouncements(context)
@@ -103,7 +108,8 @@ fun HomePageContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     AnnouncementSortMode.entries.forEach { mode ->
                         FilterChip(
@@ -126,6 +132,24 @@ fun HomePageContent(
                                 1.dp,
                                 if (mode == sortMode) HopFogBlue else Color.Gray
                             )
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = {
+                            if (!isRefreshing) {
+                                isRefreshing = true
+                                coroutineScope.launch {
+                                    announcements = NetworkManager.getAnnouncements(context)
+                                    isRefreshing = false
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Reload Announcements",
+                            tint = Color.Black
                         )
                     }
                 }

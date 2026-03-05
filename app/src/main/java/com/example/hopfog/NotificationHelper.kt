@@ -14,6 +14,10 @@ class NotificationHelper(private val context: Context) {
     companion object {
         const val SERVICE_CHANNEL_ID = "MessageCheckServiceChannel"
         const val MESSAGE_CHANNEL_ID = "NewMessageChannel"
+        const val NOTIFICATION_PREFS = "HopFog_Notification_Prefs"
+        const val KEY_SHOW_NOTIFICATIONS = "show_notifications"
+        const val KEY_SOUND = "sound"
+        const val KEY_VIBRATE = "vibrate"
     }
 
     // Create the notification channels (required for Android 8.0+)
@@ -53,15 +57,29 @@ class NotificationHelper(private val context: Context) {
 
     // Show a notification for a new message
     fun showNewMessageNotification(sender: String, message: String) {
-        val notification = NotificationCompat.Builder(context, MESSAGE_CHANNEL_ID)
+        // Check user notification preferences
+        val prefs = context.getSharedPreferences(NOTIFICATION_PREFS, Context.MODE_PRIVATE)
+        val showNotifications = prefs.getBoolean(KEY_SHOW_NOTIFICATIONS, true)
+        if (!showNotifications) return
+
+        val sound = prefs.getBoolean(KEY_SOUND, true)
+        val vibrate = prefs.getBoolean(KEY_VIBRATE, true)
+
+        val builder = NotificationCompat.Builder(context, MESSAGE_CHANNEL_ID)
             .setContentTitle("New Message from $sender")
             .setContentText(message)
             .setSmallIcon(R.drawable.ic_notification) // IMPORTANT: Create this icon!
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true) // Dismisses the notification when clicked
-            .build()
+
+        if (!sound) {
+            builder.setSilent(true)
+        }
+        if (!vibrate) {
+            builder.setVibrate(null)
+        }
 
         // Use a unique ID for each notification to show multiple, or a fixed one to update
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
     }
 }

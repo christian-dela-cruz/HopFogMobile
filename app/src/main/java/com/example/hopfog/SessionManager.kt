@@ -6,13 +6,15 @@ object SessionManager {
     private const val PREFS_NAME = "HopFog_User_Session"
     private const val KEY_USER_ID = "user_id"
     private const val KEY_USERNAME = "username"
+    private const val KEY_EMAIL = "email"
     private const val KEY_HAS_AGREED_SOS = "has_agreed_sos"
 
     // Saves ALL user data on login
-    fun saveSession(context: Context, userId: Int, username: String, hasAgreedSos: Boolean) {
+    fun saveSession(context: Context, userId: Int, username: String, email: String, hasAgreedSos: Boolean) {
         val editor = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
         editor.putInt(KEY_USER_ID, userId)
         editor.putString(KEY_USERNAME, username)
+        editor.putString(KEY_EMAIL, email)
         editor.putBoolean(KEY_HAS_AGREED_SOS, hasAgreedSos)
         editor.apply()
     }
@@ -30,6 +32,11 @@ object SessionManager {
     // Gets the locally stored username (empty if none)
     fun getUsername(context: Context): String {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_USERNAME, "") ?: ""
+    }
+
+    // Gets the locally stored email (empty if none)
+    fun getEmail(context: Context): String {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_EMAIL, "") ?: ""
     }
 
     // Checks the locally stored agreement flag

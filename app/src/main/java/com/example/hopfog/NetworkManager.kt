@@ -51,6 +51,7 @@ object NetworkManager {
                     context = context,
                     userId = userObj.getInt("user_id"),
                     username = userObj.getString("username"),
+                    email = userObj.optString("email", ""),
                     hasAgreedSos = userObj.optBoolean("has_agreed_sos", false)
                 )
                 json

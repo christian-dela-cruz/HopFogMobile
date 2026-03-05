@@ -13,6 +13,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,8 +43,14 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
 
                 // If user is already logged in, start at app_main
-                val startDestination = remember {
-                    if (SessionManager.getUserId(context) != -1) "app_main" else "landing"
+                val isLoggedIn = remember { SessionManager.getUserId(context) != -1 }
+                val startDestination = if (isLoggedIn) "app_main" else "landing"
+
+                // Restore UserViewModel from session when auto-navigating
+                if (isLoggedIn) {
+                    LaunchedEffect(Unit) {
+                        userViewModel.restoreFromSession(context)
+                    }
                 }
 
                 NavHost(

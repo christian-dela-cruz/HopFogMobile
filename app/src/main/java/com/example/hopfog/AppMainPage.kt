@@ -247,6 +247,7 @@ fun AppMainPage(
                         onLogoutClicked = {
                             val serviceIntent = Intent(context, MessageCheckService::class.java)
                             context.stopService(serviceIntent)
+                            SessionManager.clearSession(context)
                             onLogout()
                         }
                     )

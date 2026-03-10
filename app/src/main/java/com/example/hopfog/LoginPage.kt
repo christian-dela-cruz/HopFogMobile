@@ -36,8 +36,13 @@ fun LoginPage(
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("HopFog_RememberMe", Context.MODE_PRIVATE)
 
+    // Remove any legacy plain-text password that may have been saved by older versions
+    if (prefs.contains("saved_password")) {
+        prefs.edit().remove("saved_password").apply()
+    }
+
     var email by remember { mutableStateOf(prefs.getString("saved_username", "") ?: "") }
-    var password by remember { mutableStateOf(prefs.getString("saved_password", "") ?: "") }
+    var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember_me", false)) }
 
     val coroutineScope = rememberCoroutineScope()
@@ -124,7 +129,6 @@ fun LoginPage(
                                 val editor = prefs.edit()
                                 if (rememberMe) {
                                     editor.putString("saved_username", email)
-                                    editor.putString("saved_password", password)
                                     editor.putBoolean("remember_me", true)
                                 } else {
                                     editor.clear()

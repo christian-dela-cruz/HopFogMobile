@@ -17,11 +17,15 @@ import java.net.ConnectException
 object NetworkManager {
 
     private const val BASE_URL = "http://hopfog.com"
+    private const val REQUEST_TIMEOUT_MS = 10000L  // 10 seconds — ESP32 can be slow during sync
     private const val CONNECTION_ERROR_MSG = "Cannot reach HopFog server. Make sure you're connected to HopFog-Network WiFi."
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true; isLenient = true })
+        }
+        engine {
+            requestTimeout = REQUEST_TIMEOUT_MS
         }
     }
 

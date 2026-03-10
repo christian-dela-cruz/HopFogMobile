@@ -338,7 +338,7 @@ fun ConnectionStatusPopup(isVisible: Boolean, isOnline: Boolean, onDismiss: () -
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("• Status: ${if (isOnline) "Connected" else "Disconnected"}", color = Color.DarkGray)
-                Text("• Access Point: ${if (isOnline) ESP32ConnectionManager.ESP32_SSID else "None"}", color = Color.DarkGray)
+                Text("• Access Point: ${if (isOnline) "HopFog" else "None"}", color = Color.DarkGray)
             }
         }
     }

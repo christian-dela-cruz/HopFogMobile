@@ -13,9 +13,10 @@ import org.json.JSONObject
 
 object ESP32ConnectionManager {
 
-    const val ESP32_SSID = "HopFog-Network"
+    // Match ANY HopFog SSID: "HopFog-Network" (admin) or "HopFog-Node-01" (node)
+    private const val SSID_PREFIX = "HopFog"
     private const val STATUS_URL = "http://hopfog.com/status"
-    private const val PING_TIMEOUT_MS = 3000L
+    private const val PING_TIMEOUT_MS = 5000L  // 5s — ESP32 can be slow during sync
 
     private val _connectionState = MutableStateFlow(false)
     val connectionState: StateFlow<Boolean> = _connectionState.asStateFlow()
@@ -32,7 +33,8 @@ object ESP32ConnectionManager {
             .getSystemService(Context.WIFI_SERVICE) as? WifiManager ?: return false
         val wifiInfo = wifiManager.connectionInfo ?: return false
         val ssid = wifiInfo.ssid?.removeSurrounding("\"") ?: return false
-        return ssid == ESP32_SSID
+        // Match any SSID starting with "HopFog" (covers admin and all nodes)
+        return ssid.startsWith(SSID_PREFIX)
     }
 
     suspend fun checkESP32Reachable(): Boolean {

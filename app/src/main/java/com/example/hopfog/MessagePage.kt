@@ -20,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hopfog.ui.theme.HopFogBlue
 
+private const val MAX_MESSAGE_LENGTH = 60
+private const val COUNTER_DISPLAY_THRESHOLD = MAX_MESSAGE_LENGTH / 2
+
 @Composable
 fun MessagePage(
     chatViewModel: ChatViewModel,
@@ -83,48 +86,62 @@ fun MessageInput(
 ) {
     var text by remember { mutableStateOf("") }
 
-    Row(
-        modifier = Modifier
-            .background(Color(0xFF2B2B2B))
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = Modifier.background(Color(0xFF2B2B2B))
     ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            placeholder = { Text("Message...") },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(24.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = HopFogBlue,
-                unfocusedBorderColor = Color.Gray,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                cursorColor = HopFogBlue
-            ),
-            singleLine = true
-        )
+        // Show character counter only when over half the limit
+        if (text.length > COUNTER_DISPLAY_THRESHOLD) {
+            Text(
+                text = "${text.length}/$MAX_MESSAGE_LENGTH",
+                color = if (text.length >= MAX_MESSAGE_LENGTH) Color(0xFFFF6B6B) else Color.Gray,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(end = 16.dp, top = 4.dp)
+            )
+        }
 
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // This is now a standard Button to easily show the countdown text
-        Button(
-            onClick = {
-                if (text.isNotBlank()) {
-                    onSendMessage(text)
-                    text = "" // Clear input after sending
-                }
-            },
-            enabled = isEnabled && text.isNotBlank(),
-            shape = CircleShape,
-            modifier = Modifier.size(50.dp),
-            contentPadding = PaddingValues(0.dp)
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isEnabled) {
-                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
-            } else {
-                // If on cooldown, show the remaining seconds
-                Text(text = "$cooldownSeconds")
+            OutlinedTextField(
+                value = text,
+                onValueChange = { if (it.length <= MAX_MESSAGE_LENGTH) text = it },
+                placeholder = { Text("Message...") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = HopFogBlue,
+                    unfocusedBorderColor = Color.Gray,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = HopFogBlue
+                ),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // This is now a standard Button to easily show the countdown text
+            Button(
+                onClick = {
+                    if (text.isNotBlank()) {
+                        onSendMessage(text)
+                        text = "" // Clear input after sending
+                    }
+                },
+                enabled = isEnabled && text.isNotBlank(),
+                shape = CircleShape,
+                modifier = Modifier.size(50.dp),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                if (isEnabled) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send Message")
+                } else {
+                    // If on cooldown, show the remaining seconds
+                    Text(text = "$cooldownSeconds")
+                }
             }
         }
     }

@@ -49,7 +49,7 @@ fun HomePageContent(
 ) {
     val context = LocalContext.current
     var announcements by remember { mutableStateOf<List<Announcement>>(emptyList()) }
-    var sortMode by remember { mutableStateOf(AnnouncementSortMode.NEWEST_FIRST) }
+    var sortMode by remember { mutableStateOf(AnnouncementSortMode.PRIORITY) }
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -225,7 +225,7 @@ private fun AnnouncementItem(announcement: Announcement) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = Color(0xFFFFF9C4)
+        color = HopFogAnnouncementBg
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

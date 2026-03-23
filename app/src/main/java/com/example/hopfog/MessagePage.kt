@@ -18,7 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.HopFogBlue
+import com.example.hopfog.ui.theme.HopFogTimestampLight
 
 private const val MAX_MESSAGE_LENGTH = 60
 private const val COUNTER_DISPLAY_THRESHOLD = MAX_MESSAGE_LENGTH / 2
@@ -183,13 +185,25 @@ fun MessageBubble(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(backgroundColor, RoundedCornerShape(16.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+        Column(
+            horizontalAlignment = if (message.isFromCurrentUser) Alignment.End else Alignment.Start
         ) {
-            Text(text = message.messageText, color = textColor)
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .background(backgroundColor, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(text = message.messageText, color = textColor)
+            }
+            if (message.sentAt.isNotBlank()) {
+                Text(
+                    text = formatTimestamp(message.sentAt),
+                    color = HopFogTimestampLight,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp)
+                )
+            }
         }
     }
 }

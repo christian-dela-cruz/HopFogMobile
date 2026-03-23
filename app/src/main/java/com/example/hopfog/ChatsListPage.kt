@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.HopFogBlue
+import com.example.hopfog.ui.theme.HopFogTimestampDark
 
 private enum class ChatSortMode(val label: String, val icon: ImageVector) {
     NEWEST_FIRST("Newest", Icons.Default.KeyboardDoubleArrowDown),
@@ -188,8 +189,9 @@ fun ConversationItem(conversation: ChatConversation, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = formatTimestamp(conversation.timestamp),
-                color = HopFogBlue,
-                fontSize = 12.sp
+                color = HopFogTimestampDark,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
             )
         }
     }

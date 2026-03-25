@@ -2,6 +2,7 @@ package com.example.hopfog
 
 import android.content.Context
 import android.widget.Toast
+import com.example.hopfog.data.MessageEntity
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -103,13 +104,14 @@ object NetworkManager {
         }
     }
 
-    suspend fun sendMessage(context: Context, conversationId: Int, messageText: String): SendMessageResponse? {
+    suspend fun sendMessage(context: Context, conversationId: Int, messageText: String, kind: String = "message"): SendMessageResponse? {
         return try {
             val senderId = SessionManager.getUserId(context)
             val body = JSONObject().apply {
                 put("conversation_id", conversationId)
                 put("sender_id", senderId)
                 put("message_text", messageText)
+                put("kind", kind)
             }.toString()
             client.post("$BASE_URL/send") {
                 contentType(ContentType.Application.Json)
@@ -271,6 +273,18 @@ object NetworkManager {
             json.optBoolean("online", false)
         } catch (e: Exception) {
             false
+        }
+    }
+
+    suspend fun getConversationHistory(context: Context, otherUserId: Int, userId: Int): List<MessageEntity> {
+        return try {
+            client.get("$BASE_URL/api/conversation/$otherUserId") {
+                parameter("user_id", userId)
+            }.body()
+        } catch (e: ConnectException) {
+            emptyList()
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 }

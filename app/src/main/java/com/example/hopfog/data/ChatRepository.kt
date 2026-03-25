@@ -1,6 +1,7 @@
 package com.example.hopfog.data
 
 import android.content.Context
+import android.util.Log
 import com.example.hopfog.NetworkManager
 import kotlinx.coroutines.flow.Flow
 
@@ -16,8 +17,9 @@ class ChatRepository(
             if (response.isNotEmpty()) {
                 dao.insertAll(response)
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             // Network error — fall back to cached data
+            Log.w("ChatRepository", "Sync failed, using cached data: ${e.message}")
         }
     }
 }

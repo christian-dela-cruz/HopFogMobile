@@ -80,7 +80,7 @@ fun SosMessagePage(
                             onClick = {
                                 // The check happens in the ViewModel, but good practice to have it here too
                                 if (isSendingEnabled) {
-                                    chatViewModel.sendMessage(context, conversationId, reply)
+                                    chatViewModel.sendMessage(context, conversationId, reply, "sos_request")
                                 }
                             },
                             // --- NEW: Disable button during cooldown ---
@@ -125,7 +125,7 @@ fun SosMessagePage(
                     IconButton(
                         onClick = {
                             if (isSendingEnabled && text.isNotBlank()) {
-                                chatViewModel.sendMessage(context, conversationId, text)
+                                chatViewModel.sendMessage(context, conversationId, text, "sos_request")
                                 text = ""
                             }
                         },

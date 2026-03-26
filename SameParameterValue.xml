@@ -1,0 +1,30 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/HomePage.kt</file>
+  <line>129</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.HomePageKt void NearbyUserItem(java.lang.String name)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;name&lt;/code&gt; is always '&quot;Chuckie&quot;'</description>
+  <highlighted_element>name</highlighted_element>
+  <language>kotlin</language>
+  <offset>27</offset>
+  <length>4</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/hopfog/SettingsPage.kt</file>
+  <line>115</line>
+  <module>HopFog.app.main</module>
+  <package>com.example.hopfog</package>
+  <entry_point TYPE="method" FQNAME="com.example.hopfog.SettingsPageKt void InfoItem(java.lang.String text)" />
+  <problem_class id="SameParameterValue" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method parameter always has the same value</problem_class>
+  <hints />
+  <description>Value of parameter &lt;code&gt;text&lt;/code&gt; is always '&quot;App Version: 1.0.0&quot;'</description>
+  <highlighted_element>text</highlighted_element>
+  <language>kotlin</language>
+  <offset>21</offset>
+  <length>4</length>
+</problem>
+</problems>

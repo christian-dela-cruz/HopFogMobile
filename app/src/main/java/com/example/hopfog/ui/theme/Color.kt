@@ -17,3 +17,7 @@ val HopFogLightBlue = Color(0xFFEAF2F8)
 val HopFogRed = Color(0xFFC0392B)
 val HopFogGreen = Color(0xFF2ECC71)
 val HopFogYellow = Color(0xFFF1C40F)
+
+val HopFogTimestampLight = Color(0xFFB0B0B0)
+val HopFogTimestampDark = Color(0xFF555555)
+val HopFogAnnouncementBg = Color(0xFFE8EFF5)

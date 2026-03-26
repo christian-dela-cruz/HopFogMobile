@@ -57,14 +57,14 @@ class ChatViewModel : ViewModel() {
     }
 
     // --- UPDATED sendMessage FUNCTION ---
-    fun sendMessage(context: Context, conversationId: Int, messageText: String) {
+    fun sendMessage(context: Context, conversationId: Int, messageText: String, kind: String = "message") {
         // 1. Immediately block if already in cooldown
         if (_cooldownState.value is CooldownState.CoolingDown) return
         if (messageText.isBlank()) return
 
         viewModelScope.launch {
             // This is the network call
-            val response = NetworkManager.sendMessage(context, conversationId, messageText)
+            val response = NetworkManager.sendMessage(context, conversationId, messageText, kind)
 
             if (response != null) {
                 // The server gave a response

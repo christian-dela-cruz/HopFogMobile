@@ -1,0 +1,14 @@
+<problems>
+<problem>
+  <file>HopFog.app.androidTest</file>
+  <module>HopFog.app.androidTest</module>
+  <entry_point TYPE="module" FQNAME="HopFog.app.androidTest" />
+  <problem_class id="UnnecessaryModuleDependencyInspection" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary module dependency</problem_class>
+  <hints>
+    <hint value="HopFog.app.main" />
+  </hints>
+  <description>Module 'HopFog.app.androidTest' sources do not depend on module 'HopFog.app.main' sources</description>
+  <highlighted_element />
+  <language />
+</problem>
+</problems>

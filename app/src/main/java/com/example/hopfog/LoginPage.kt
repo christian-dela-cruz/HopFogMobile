@@ -2,7 +2,6 @@ package com.example.hopfog
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -11,16 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.compose.runtime.rememberCoroutineScope
+import android.content.Context
 import android.widget.Toast
 import com.example.hopfog.ui.theme.HopFogBackground
 import com.example.hopfog.ui.theme.HopFogBlue
@@ -34,15 +31,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun LoginPage(
     userViewModel: UserViewModel = viewModel(),
     onLoginClicked: () -> Unit,
-    onSignUpClicked: () -> Unit,
-    onForgotPasswordClicked: () -> Unit
+    onSignUpClicked: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("HopFog_RememberMe", Context.MODE_PRIVATE)
+
+    // Remove any legacy plain-text password that may have been saved by older versions
+    if (prefs.contains("saved_password")) {
+        prefs.edit().remove("saved_password").apply()
+    }
+
+    var email by remember { mutableStateOf(prefs.getString("saved_username", "") ?: "") }
     var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember_me", false)) }
 
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize(), color = HopFogBackground) {
         Column(
@@ -98,8 +101,7 @@ fun LoginPage(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
@@ -113,9 +115,6 @@ fun LoginPage(
                     )
                     Text("Remember Me", color = Color.White)
                 }
-                TextButton(onClick = onForgotPasswordClicked) {
-                    Text("Forgot Password?", color = HopFogBlue)
-                }
             }
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -127,6 +126,14 @@ fun LoginPage(
                         coroutineScope.launch {
                             val resultJson = NetworkManager.loginUser(context, email, password)
                             if (resultJson != null) {
+                                val editor = prefs.edit()
+                                if (rememberMe) {
+                                    editor.putString("saved_username", email)
+                                    editor.putBoolean("remember_me", true)
+                                } else {
+                                    editor.clear()
+                                }
+                                editor.apply()
                                 userViewModel.onLoginSuccess(resultJson)
                                 onLoginClicked()
                             }
@@ -141,28 +148,14 @@ fun LoginPage(
             ) {
                 Text("Sign In", color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // "Don't have account? Sign Up" text
-            val annotatedText = buildAnnotatedString {
-                withStyle(style = SpanStyle(color = Color.LightGray)) {
-                    append("Don't have account? ")
-                }
-                pushStringAnnotation(tag = "SignUp", annotation = "SignUp")
-                withStyle(style = SpanStyle(color = HopFogBlue, fontWeight = FontWeight.Bold)) {
-                    append("Sign Up")
-                }
-                pop()
-            }
-
-            ClickableText(
-                text = annotatedText,
-                onClick = { offset ->
-                    annotatedText.getStringAnnotations(tag = "SignUp", start = offset, end = offset)
-                        .firstOrNull()?.let {
-                            onSignUpClicked()
-                        }
-                }
+            Text(
+                text = "Don't have an account? Ask your community admin to create one for you.",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }
@@ -176,7 +169,6 @@ fun LoginPagePreview() {
     HopFogTheme {
         LoginPage(
             onLoginClicked = {},
-            onSignUpClicked = {},
-            onForgotPasswordClicked = {})
+            onSignUpClicked = {})
     }
 }

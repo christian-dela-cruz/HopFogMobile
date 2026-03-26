@@ -2,8 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -66,6 +66,11 @@ dependencies {
 
     // Lifecycle ViewModel for Compose (Consolidated to version 2.8.0)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    // Room for local conversation archiving
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
 
     // Testing Libraries
     testImplementation(libs.junit)

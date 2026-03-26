@@ -1,8 +1,12 @@
 package com.example.hopfog
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.Image
@@ -13,13 +17,17 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -31,16 +39,43 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 class MainActivity : ComponentActivity() {
+
+    // Result is not handled here — permission state is checked at notification time
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* granted or denied */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Request POST_NOTIFICATIONS permission on Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
         setContent {
             HopFogTheme {
                 val navController = rememberNavController()
                 val userViewModel: UserViewModel = viewModel()
+                val context = LocalContext.current
+
+                // If user is already logged in, start at app_main
+                val isLoggedIn = remember { SessionManager.getUserId(context) != -1 }
+                val startDestination = if (isLoggedIn) "app_main" else "landing"
+
+                // Restore UserViewModel from session when auto-navigating
+                if (isLoggedIn) {
+                    LaunchedEffect(Unit) {
+                        userViewModel.restoreFromSession(context)
+                    }
+                }
 
                 NavHost(
                     navController = navController,
-                    startDestination = "landing",
+                    startDestination = startDestination,
                     enterTransition = { EnterTransition.None },
                     exitTransition = { ExitTransition.None },
                 ) {
@@ -56,20 +91,19 @@ class MainActivity : ComponentActivity() {
                                     popUpTo("landing") { inclusive = true }
                                 }
                             },
-                            onSignUpClicked = { navController.navigate("register") },
-                            onForgotPasswordClicked = { /* TODO */ }
+                            onSignUpClicked = { navController.navigate("register") }
                         )
                     }
-                    composable("register") {
-                        RegisterPage(
-                            onSignUpClicked = {
-                                navController.navigate("login") {
-                                    popUpTo("landing") { inclusive = true }
-                                }
-                            },
-                            onBackClicked = { navController.popBackStack() }
-                        )
-                    }
+//                    composable("register") {
+//                        RegisterPage(
+//                            onSignUpClicked = {
+//                                navController.navigate("login") {
+//                                    popUpTo("landing") { inclusive = true }
+//                                }
+//                            },
+//                            onBackClicked = { navController.popBackStack() }
+//                        )
+//                    }
                     composable("app_main") {
                         AppMainPage(
                             userViewModel = userViewModel,

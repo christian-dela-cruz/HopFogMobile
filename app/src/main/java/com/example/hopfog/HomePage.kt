@@ -1,23 +1,33 @@
 package com.example.hopfog
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,12 +35,42 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hopfog.ui.theme.*
 
+private enum class AnnouncementSortMode(val label: String, val icon: ImageVector) {
+    NEWEST_FIRST("Newest", Icons.Default.KeyboardDoubleArrowDown),
+    OLDEST_FIRST("Oldest", Icons.Default.KeyboardDoubleArrowUp),
+    PRIORITY("Priority", Icons.Default.PriorityHigh)
+}
+
 @Composable
 fun HomePageContent(
     isOnline: Boolean,
     onSendSosClick: () -> Unit,
-    onNewMessageClick: () -> Unit // <-- CHANGE #1: Add the new parameter here
+    onNewMessageClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    var announcements by remember { mutableStateOf<List<Announcement>>(emptyList()) }
+    var sortMode by remember { mutableStateOf(AnnouncementSortMode.PRIORITY) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(isOnline) {
+        announcements = NetworkManager.getAnnouncements(context)
+    }
+
+    val sortedAnnouncements = remember(announcements, sortMode) {
+        when (sortMode) {
+            AnnouncementSortMode.NEWEST_FIRST ->
+                announcements.sortedByDescending { parseTimestampToMillis(it.createdAt) }
+            AnnouncementSortMode.OLDEST_FIRST ->
+                announcements.sortedBy { parseTimestampToMillis(it.createdAt) }
+            AnnouncementSortMode.PRIORITY ->
+                announcements.sortedWith(
+                    compareBy<Announcement> { announcementPriorityRank(it) }
+                        .thenByDescending { parseTimestampToMillis(it.createdAt) }
+                )
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -48,24 +88,76 @@ fun HomePageContent(
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // --- CHANGE #2: Pass the new click handler down ---
                 ActionButtons(
                     onSendSosClick = onSendSosClick,
-                    onNewMessageClick = onNewMessageClick // <-- Pass it here
+                    onNewMessageClick = onNewMessageClick
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                Text(
-                    text = "Nearby",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Announcements",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AnnouncementSortMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = mode == sortMode,
+                            onClick = { sortMode = mode },
+                            label = { Text(mode.label, fontSize = 13.sp) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = mode.icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = HopFogBlue,
+                                selectedLabelColor = Color.Black,
+                                selectedLeadingIconColor = Color.Black
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                if (mode == sortMode) HopFogBlue else Color.Gray
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = {
+                            if (!isRefreshing) {
+                                isRefreshing = true
+                                coroutineScope.launch {
+                                    announcements = NetworkManager.getAnnouncements(context)
+                                    isRefreshing = false
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Reload Announcements",
+                            tint = Color.Black
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                if (isOnline) {
-                    NearbyUserList()
+                if (sortedAnnouncements.isNotEmpty()) {
+                    AnnouncementList(announcements = sortedAnnouncements)
                 } else {
-                    ReadyToHopMessage()
+                    NoAnnouncementsMessage()
                 }
             }
         }
@@ -75,7 +167,7 @@ fun HomePageContent(
 @Composable
 private fun ActionButtons(
     onSendSosClick: () -> Unit,
-    onNewMessageClick: () -> Unit // <-- CHANGE #3: Accept the new parameter here
+    onNewMessageClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -85,7 +177,7 @@ private fun ActionButtons(
             text = "New Message",
             icon = Icons.Default.Message,
             color = HopFogBlue,
-            onClick = onNewMessageClick, // <-- CHANGE #4: Use the parameter here, replacing the TODO
+            onClick = onNewMessageClick,
             modifier = Modifier.weight(1f).aspectRatio(1f)
         )
         ActionButton(
@@ -118,46 +210,75 @@ private fun ActionButton(
         }
     }
 }
-@Composable
-private fun NearbyUserList() {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        NearbyUserItem(name = "Chuckie")
-    }
-}
 
 @Composable
-private fun NearbyUserItem(name: String) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = Color(0xFFFFF9C4)
-    ) {
-        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(imageVector = Icons.Default.Face, contentDescription = "User Avatar", modifier = Modifier.size(40.dp).clip(CircleShape).background(HopFogYellow))
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(name, fontWeight = FontWeight.Bold, color = Color.Black)
+private fun AnnouncementList(announcements: List<Announcement>) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(announcements) { announcement ->
+            AnnouncementItem(announcement = announcement)
         }
     }
 }
 
 @Composable
-private fun ReadyToHopMessage() {
+private fun AnnouncementItem(announcement: Announcement) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = HopFogAnnouncementBg
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Campaign,
+                    contentDescription = "Announcement",
+                    tint = HopFogRed,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = announcement.title,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    fontSize = 16.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = announcement.message,
+                color = Color.DarkGray,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
+            if (!announcement.createdAt.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = formatTimestamp(announcement.createdAt),
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoAnnouncementsMessage() {
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("Ready to Hop?", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        Text("No Announcements", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Go online to discover and message other HopFog users within 47.6 meters, even without internet. Tap the icon above to get started.",
+            "There are no SOS announcements from admins at this time. Stay safe and check back later.",
             textAlign = TextAlign.Center, color = Color.DarkGray, lineHeight = 20.sp
         )
     }
 }
 
-// --- Previews updated to satisfy the new parameter ---
 @Preview(name = "Home Page (Online)", showBackground = true)
 @Composable
 fun HomePageContentOnlinePreview() {
     HopFogTheme {
-        HomePageContent(isOnline = true, onSendSosClick = {}, onNewMessageClick = {}) // <-- Added empty click handler
+        HomePageContent(isOnline = true, onSendSosClick = {}, onNewMessageClick = {})
     }
 }
 
@@ -165,6 +286,6 @@ fun HomePageContentOnlinePreview() {
 @Composable
 fun HomePageContentOfflinePreview() {
     HopFogTheme {
-        HomePageContent(isOnline = false, onSendSosClick = {}, onNewMessageClick = {}) // <-- Added empty click handler
+        HomePageContent(isOnline = false, onSendSosClick = {}, onNewMessageClick = {})
     }
 }

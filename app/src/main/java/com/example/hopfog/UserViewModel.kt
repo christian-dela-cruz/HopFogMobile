@@ -1,6 +1,7 @@
 package com.example.hopfog
 
 import androidx.lifecycle.ViewModel
+import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
@@ -39,6 +40,21 @@ class UserViewModel : ViewModel() {
 
         // Update the state flow's value. Any screen observing this flow will now be recomposed.
         _user.value = loggedInUser
+    }
+
+    /**
+     * Restores user state from SessionManager when the app is reopened
+     * without going through the login flow.
+     */
+    fun restoreFromSession(context: Context) {
+        val userId = SessionManager.getUserId(context)
+        if (userId != -1 && _user.value == null) {
+            _user.value = User(
+                id = userId,
+                username = SessionManager.getUsername(context),
+                email = SessionManager.getEmail(context)
+            )
+        }
     }
 
     /**

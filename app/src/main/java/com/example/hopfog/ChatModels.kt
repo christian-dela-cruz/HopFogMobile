@@ -84,3 +84,74 @@ data class SelectableUser(
     @SerialName("username")
     val username: String
 )
+
+@Serializable
+data class Announcement(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("title")
+    val title: String,
+    @SerialName("message")
+    val message: String,
+    @SerialName("created_at")
+    val createdAt: String? = null
+)
+
+/**
+ * Returns a priority rank for an announcement based on its title.
+ * Lower rank = higher priority: SOS (0) > Alerts (1) > Announcements/other (2).
+ * Uses word-boundary matching to avoid false positives.
+ */
+fun announcementPriorityRank(announcement: Announcement): Int {
+    val titleLower = announcement.title.lowercase()
+    return when {
+        Regex("\\bsos\\b").containsMatchIn(titleLower) -> 0
+        Regex("\\balert\\b").containsMatchIn(titleLower) -> 1
+        else -> 2
+    }
+}
+
+/**
+ * Parses a timestamp string into epoch milliseconds for sorting.
+ * Handles both Unix epoch seconds (numeric strings) and date strings (e.g., "2024-02-25 14:30:00").
+ * Returns 0 if parsing fails.
+ */
+fun parseTimestampToMillis(value: String?): Long {
+    if (value.isNullOrBlank()) return 0L
+    return try {
+        if (value.all { it.isDigit() }) {
+            value.toLong() * 1000L
+        } else {
+            java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                .parse(value)?.time ?: 0L
+        }
+    } catch (e: Exception) {
+        0L
+    }
+}
+
+/**
+ * Formats a timestamp string for display. Handles both Unix epoch seconds
+ * (numeric strings from ESP32) and date strings (e.g., "2024-02-25 14:30:00").
+ * Returns "HH:mm" for today's timestamps, "MMM dd, HH:mm" for older dates.
+ */
+fun formatTimestamp(value: String?): String {
+    if (value.isNullOrBlank()) return ""
+    return try {
+        if (value.all { it.isDigit() }) {
+            val date = java.util.Date(value.toLong() * 1000L)
+            val todayFmt = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault())
+            val isToday = todayFmt.format(date) == todayFmt.format(java.util.Date())
+            if (isToday) {
+                java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(date)
+            } else {
+                java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.getDefault()).format(date)
+            }
+        } else {
+            // Try to extract time portion from date string like "2024-02-25 14:30:00"
+            value.split(" ").getOrNull(1)?.substringBeforeLast(":") ?: value
+        }
+    } catch (e: Exception) {
+        value
+    }
+}

@@ -11,6 +11,10 @@ class ChatRepository(
     fun getConversation(userId: Int, otherUserId: Int): Flow<List<MessageEntity>> =
         dao.getConversation(userId, otherUserId)
 
+    suspend fun insertAll(messages: List<MessageEntity>) {
+        dao.insertAll(messages)
+    }
+
     suspend fun syncConversation(context: Context, userId: Int, otherUserId: Int) {
         try {
             val response = NetworkManager.getConversationHistory(context, otherUserId, userId)

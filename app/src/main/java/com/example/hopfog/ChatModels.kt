@@ -22,7 +22,9 @@ data class ChatConversation(
     @SerialName("last_message")
     val lastMessage: String?,
     @SerialName("timestamp")
-    val timestamp: String?
+    val timestamp: String?,
+    @SerialName("other_user_id")
+    val otherUserId: Int = 0
 )
 
 @Serializable

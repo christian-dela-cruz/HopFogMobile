@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun NewMessagePage(
-    onUserSelected: (conversationId: Int, contactName: String) -> Unit
+    onUserSelected: (conversationId: Int, otherUserId: Int, contactName: String) -> Unit
 ) {
     val context = LocalContext.current
     var userList by remember { mutableStateOf<List<SelectableUser>>(emptyList()) }
@@ -66,7 +66,7 @@ fun NewMessagePage(
                                     val response = NetworkManager.findOrCreateChatWithUser(context, user.id)
                                     if (response != null) {
                                         // Once chat is created, navigate to the message page
-                                        onUserSelected(response.conversationId, response.contactName)
+                                        onUserSelected(response.conversationId, user.id, response.contactName)
                                     }
                                     isLoading = false
                                 }

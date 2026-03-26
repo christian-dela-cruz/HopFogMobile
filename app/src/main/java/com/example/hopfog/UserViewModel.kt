@@ -54,6 +54,11 @@ class UserViewModel : ViewModel() {
                 username = SessionManager.getUsername(context),
                 email = SessionManager.getEmail(context)
             )
+            // Restore access token so subsequent API requests include the auth header
+            val token = SessionManager.getAccessToken(context)
+            if (token.isNotEmpty()) {
+                NetworkManager.setAccessToken(token)
+            }
         }
     }
 

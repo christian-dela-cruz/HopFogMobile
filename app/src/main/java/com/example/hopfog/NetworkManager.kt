@@ -21,6 +21,19 @@ object NetworkManager {
     private const val REQUEST_TIMEOUT_MS = 10000L  // 10 seconds — ESP32 can be slow during sync
     private const val CONNECTION_ERROR_MSG = "Cannot reach HopFog server. Make sure you're connected to HopFog-Network WiFi."
 
+    @Volatile
+    private var accessToken: String = ""
+
+    /** Called after a successful login or session restore to attach the Bearer token. */
+    fun setAccessToken(token: String) {
+        accessToken = token
+    }
+
+    /** Called on logout to stop sending the auth header. */
+    fun clearAccessToken() {
+        accessToken = ""
+    }
+
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true; isLenient = true })
@@ -32,6 +45,13 @@ object NetworkManager {
 
     private fun Context.toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    /** Appends the Authorization header when an access token is available. */
+    private fun HttpRequestBuilder.addAuthHeader() {
+        if (accessToken.isNotEmpty()) {
+            header(HttpHeaders.Authorization, "Bearer $accessToken")
+        }
     }
 
     suspend fun registerUser(context: Context, username: String, email: String, password: String): Boolean {
@@ -59,6 +79,11 @@ object NetworkManager {
                     email = userObj.optString("email", ""),
                     hasAgreedSos = userObj.optBoolean("has_agreed_sos", false)
                 )
+                val accessToken = json.optString("access_token", "")
+                if (accessToken.isNotEmpty()) {
+                    setAccessToken(accessToken)
+                    SessionManager.saveAccessToken(context, accessToken)
+                }
                 json
             } else {
                 context.toast("Login failed: ${json.optString("message", "Invalid credentials")}")
@@ -77,6 +102,7 @@ object NetworkManager {
         return try {
             val userId = SessionManager.getUserId(context)
             client.get("$BASE_URL/conversations") {
+                addAuthHeader()
                 parameter("user_id", userId)
             }.body()
         } catch (e: ConnectException) {
@@ -92,6 +118,7 @@ object NetworkManager {
         return try {
             val userId = SessionManager.getUserId(context)
             client.get("$BASE_URL/messages") {
+                addAuthHeader()
                 parameter("conversation_id", conversationId)
                 parameter("user_id", userId)
             }.body()
@@ -114,6 +141,7 @@ object NetworkManager {
                 put("kind", kind)
             }.toString()
             client.post("$BASE_URL/send") {
+                addAuthHeader()
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }.body()
@@ -130,6 +158,7 @@ object NetworkManager {
         return try {
             val userId = SessionManager.getUserId(context)
             client.get("$BASE_URL/users") {
+                addAuthHeader()
                 parameter("user_id", userId)
             }.body()
         } catch (e: ConnectException) {
@@ -149,6 +178,7 @@ object NetworkManager {
                 put("user2_id", otherUserId)
             }.toString()
             client.post("$BASE_URL/create-chat") {
+                addAuthHeader()
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }.body()
@@ -168,6 +198,7 @@ object NetworkManager {
                 put("user_id", userId)
             }.toString()
             client.post("$BASE_URL/sos") {
+                addAuthHeader()
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }.body()
@@ -184,6 +215,7 @@ object NetworkManager {
         return try {
             val userId = SessionManager.getUserId(context)
             client.get("$BASE_URL/new-messages") {
+                addAuthHeader()
                 parameter("last_id", lastMessageId)
                 parameter("user_id", userId)
             }.body()
@@ -201,6 +233,7 @@ object NetworkManager {
                 put("user_id", userId)
             }.toString()
             val response: HttpResponse = client.post("$BASE_URL/agree-sos") {
+                addAuthHeader()
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }
@@ -230,6 +263,7 @@ object NetworkManager {
                 put("new_password", newPass)
             }.toString()
             val response: HttpResponse = client.post("$BASE_URL/change-password") {
+                addAuthHeader()
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }
@@ -279,6 +313,7 @@ object NetworkManager {
     suspend fun getConversationHistory(context: Context, otherUserId: Int, userId: Int): List<MessageEntity> {
         return try {
             client.get("$BASE_URL/api/conversation/$otherUserId") {
+                addAuthHeader()
                 parameter("user_id", userId)
             }.body()
         } catch (e: ConnectException) {

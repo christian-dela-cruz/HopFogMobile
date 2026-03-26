@@ -231,8 +231,8 @@ fun AppMainPage(
                 composable("chats_list") {
                     ChatsListPage(
                         chatViewModel = chatViewModel,
-                        onConversationClick = { conversationId, contactName ->
-                            innerNavController.navigate("messages/$conversationId/$contactName")
+                        onConversationClick = { conversationId, otherUserId, contactName ->
+                            innerNavController.navigate("messages/$conversationId/$otherUserId/$contactName")
                         },
                         onNewMessageClick = {
                             innerNavController.navigate("new_message_page")
@@ -247,22 +247,25 @@ fun AppMainPage(
                         onLogoutClicked = {
                             val serviceIntent = Intent(context, MessageCheckService::class.java)
                             context.stopService(serviceIntent)
+                            NetworkManager.clearAccessToken()
                             SessionManager.clearSession(context)
                             onLogout()
                         }
                     )
                 }
                 composable(
-                    "messages/{conversationId}/{contactName}",
+                    "messages/{conversationId}/{otherUserId}/{contactName}",
                     arguments = listOf(
                         navArgument("conversationId") { type = NavType.IntType },
+                        navArgument("otherUserId") { type = NavType.IntType },
                         navArgument("contactName") { type = NavType.StringType }
                     )
                 ) { backStackEntry ->
                     val conversationId = backStackEntry.arguments?.getInt("conversationId") ?: 0
+                    val otherUserId = backStackEntry.arguments?.getInt("otherUserId") ?: 0
                     val contactName = backStackEntry.arguments?.getString("contactName") ?: ""
                     LaunchedEffect(conversationId) {
-                        chatViewModel.loadMessages(context, conversationId, contactName)
+                        chatViewModel.loadMessages(context, conversationId, contactName, otherUserId)
                     }
                     MessagePage(chatViewModel = chatViewModel, conversationId = conversationId)
                 }
@@ -282,9 +285,9 @@ fun AppMainPage(
                 }
                 composable("new_message_page") {
                     NewMessagePage(
-                        onUserSelected = { conversationId, contactName ->
+                        onUserSelected = { conversationId, otherUserId, contactName ->
                             // Navigate to the message page with the new conversation details
-                            innerNavController.navigate("messages/$conversationId/$contactName") {
+                            innerNavController.navigate("messages/$conversationId/$otherUserId/$contactName") {
                                 // Remove the "New Message" page from the back stack
                                 popUpTo("new_message_page") { inclusive = true }
                             }

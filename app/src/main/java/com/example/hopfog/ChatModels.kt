@@ -17,9 +17,10 @@ import kotlinx.serialization.json.JsonPrimitive
  * Serializes back as a standard JSON boolean.
  */
 object PHPBooleanSerializer : KSerializer<Boolean> {
-    // STRING descriptor is used as a generic base; the actual decoding logic in
-    // deserialize() handles all three wire representations (boolean, integer, string)
-    // by reading the raw JsonElement and inspecting its content directly.
+    // STRING descriptor is chosen so the framework doesn't attempt its own primitive
+    // decode before our custom deserialize() runs. The actual decode logic reads the
+    // raw JsonElement directly and handles all three wire forms (boolean, integer,
+    // string) regardless of this descriptor type.
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("PHPBoolean", PrimitiveKind.STRING)
 
@@ -29,11 +30,11 @@ object PHPBooleanSerializer : KSerializer<Boolean> {
         val jsonDecoder = decoder as? JsonDecoder ?: return decoder.decodeBoolean()
         val element = jsonDecoder.decodeJsonElement()
         if (element !is JsonPrimitive) return false
-        // Priority: proper JSON boolean → integer 0/1 → string "true"/"1"
+        // element.content is always available on JsonPrimitive regardless of whether the
+        // wire value was a JSON boolean (true/false), an integer (0/1), or a quoted string.
         // Unexpected values default to false rather than crashing on a malformed server response.
-        return element.booleanOrNull
-            ?: element.intOrNull?.let { it != 0 }
-            ?: element.content.lowercase().let { it == "true" || it == "1" }
+        val raw = element.content.lowercase()
+        return raw == "true" || raw == "1"
     }
 }
 

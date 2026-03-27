@@ -28,17 +28,17 @@ fun NewMessagePage(
     onUserSelected: (conversationId: Int, otherUserId: Int, contactName: String) -> Unit
 ) {
     val context = LocalContext.current
-    // Full fetched list (admin already excluded on server side via role filter)
+    // Full fetched list — only mobile-role users are kept after loading
     var allUsers by remember { mutableStateOf<List<SelectableUser>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var showOnlineOnly by remember { mutableStateOf(true) }
+    var showOnlineOnly by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
-    // Fetch the list of users when the page is first displayed, excluding admin accounts
+    // Fetch the list of users when the page is first displayed; include only mobile users
     LaunchedEffect(Unit) {
         isLoading = true
-        allUsers = NetworkManager.getAllUsers(context).filter { !it.role.equals("admin", ignoreCase = true) }
+        allUsers = NetworkManager.getAllUsers(context).filter { it.role == "mobile" }
         isLoading = false
     }
 

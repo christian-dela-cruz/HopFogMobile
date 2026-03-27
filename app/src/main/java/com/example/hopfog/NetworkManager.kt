@@ -36,7 +36,7 @@ object NetworkManager {
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true; isLenient = true })
+            json(Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true })
         }
         engine {
             requestTimeout = REQUEST_TIMEOUT_MS

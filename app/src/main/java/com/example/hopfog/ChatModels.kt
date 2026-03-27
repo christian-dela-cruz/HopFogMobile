@@ -17,8 +17,9 @@ import kotlinx.serialization.json.JsonPrimitive
  * Serializes back as a standard JSON boolean.
  */
 object PHPBooleanSerializer : KSerializer<Boolean> {
-    // STRING descriptor is used because the incoming JSON value may be a boolean, integer,
-    // or quoted string — all are valid representations from PHP/MySQL servers.
+    // STRING descriptor is used as a generic base; the actual decoding logic in
+    // deserialize() handles all three wire representations (boolean, integer, string)
+    // by reading the raw JsonElement and inspecting its content directly.
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("PHPBoolean", PrimitiveKind.STRING)
 

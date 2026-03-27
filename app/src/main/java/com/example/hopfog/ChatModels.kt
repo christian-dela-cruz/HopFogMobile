@@ -88,7 +88,9 @@ data class SelectableUser(
     @SerialName("username")
     val username: String,
     @SerialName("role")
-    val role: String = ""
+    val role: String = "",
+    @SerialName("is_online")
+    val isOnline: Boolean = false
 )
 
 @Serializable

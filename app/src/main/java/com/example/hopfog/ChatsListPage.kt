@@ -56,11 +56,12 @@ fun ChatsListPage(
     }
 
     val sortedConversations = remember(conversations, chatSortMode) {
+        val nonAdminConversations = conversations.filter { !it.isAdmin }
         when (chatSortMode) {
             ChatSortMode.NEWEST_FIRST ->
-                conversations.sortedByDescending { parseTimestampToMillis(it.timestamp) }
+                nonAdminConversations.sortedByDescending { parseTimestampToMillis(it.timestamp) }
             ChatSortMode.OLDEST_FIRST ->
-                conversations.sortedBy { parseTimestampToMillis(it.timestamp) }
+                nonAdminConversations.sortedBy { parseTimestampToMillis(it.timestamp) }
         }
     }
 

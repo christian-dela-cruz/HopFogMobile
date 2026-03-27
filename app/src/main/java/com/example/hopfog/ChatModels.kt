@@ -1,7 +1,40 @@
 package com.example.hopfog
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
+
+/**
+ * Deserializes PHP/MySQL boolean fields that may arrive as a JSON integer (0/1),
+ * a quoted string ("0"/"1"/"true"/"false"), or a proper JSON boolean (true/false).
+ * Serializes back as a standard JSON boolean.
+ */
+object PHPBooleanSerializer : KSerializer<Boolean> {
+    // STRING descriptor is used because the incoming JSON value may be a boolean, integer,
+    // or quoted string — all are valid representations from PHP/MySQL servers.
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("PHPBoolean", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Boolean) = encoder.encodeBoolean(value)
+
+    override fun deserialize(decoder: Decoder): Boolean {
+        val jsonDecoder = decoder as? JsonDecoder ?: return decoder.decodeBoolean()
+        val element = jsonDecoder.decodeJsonElement()
+        if (element !is JsonPrimitive) return false
+        // Priority: proper JSON boolean → integer 0/1 → string "true"/"1"
+        // Unexpected values default to false rather than crashing on a malformed server response.
+        return element.booleanOrNull
+            ?: element.intOrNull?.let { it != 0 }
+            ?: element.content.lowercase().let { it == "true" || it == "1" }
+    }
+}
 
 
 
@@ -25,6 +58,7 @@ data class ChatConversation(
     val timestamp: String?,
     @SerialName("other_user_id")
     val otherUserId: Int = 0,
+    @Serializable(with = PHPBooleanSerializer::class)
     @SerialName("is_admin")
     val isAdmin: Boolean = false
 )
@@ -89,6 +123,7 @@ data class SelectableUser(
     val username: String,
     @SerialName("role")
     val role: String = "",
+    @Serializable(with = PHPBooleanSerializer::class)
     @SerialName("is_online")
     val isOnline: Boolean = false
 )

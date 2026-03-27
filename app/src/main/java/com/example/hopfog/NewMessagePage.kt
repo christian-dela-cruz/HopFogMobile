@@ -38,7 +38,7 @@ fun NewMessagePage(
     // Fetch the list of users when the page is first displayed, excluding admin accounts
     LaunchedEffect(Unit) {
         isLoading = true
-        allUsers = NetworkManager.getAllUsers(context).filter { it.role != "admin" }
+        allUsers = NetworkManager.getAllUsers(context).filter { !it.role.equals("admin", ignoreCase = true) }
         isLoading = false
     }
 

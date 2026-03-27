@@ -127,7 +127,10 @@ data class SelectableUser(
     val role: String = "",
     @Serializable(with = PHPBooleanSerializer::class)
     @SerialName("is_online")
-    val isOnline: Boolean = false
+    val isOnline: Boolean = false,
+    @Serializable(with = PHPBooleanSerializer::class)
+    @SerialName("is_admin")
+    val isAdmin: Boolean = false
 )
 
 @Serializable

@@ -26,7 +26,7 @@ fun NewMessagePage(
     // Fetch the list of users when the page is first displayed
     LaunchedEffect(Unit) {
         isLoading = true
-        userList = NetworkManager.getAllUsers(context)
+        userList = NetworkManager.getAllUsers(context).filter { it.role != "admin" }
         isLoading = false
     }
 

@@ -24,7 +24,9 @@ data class ChatConversation(
     @SerialName("timestamp")
     val timestamp: String?,
     @SerialName("other_user_id")
-    val otherUserId: Int = 0
+    val otherUserId: Int = 0,
+    @SerialName("is_admin")
+    val isAdmin: Boolean = false
 )
 
 @Serializable
@@ -84,7 +86,9 @@ data class SelectableUser(
     @SerialName("id")
     val id: Int,
     @SerialName("username")
-    val username: String
+    val username: String,
+    @SerialName("role")
+    val role: String = ""
 )
 
 @Serializable

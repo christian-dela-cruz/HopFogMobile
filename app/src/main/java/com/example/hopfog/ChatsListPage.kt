@@ -42,7 +42,7 @@ private enum class ChatSortMode(val label: String, val icon: ImageVector) {
 @Composable
 fun ChatsListPage(
     chatViewModel: ChatViewModel,
-    onConversationClick: (conversationId: Int, otherUserId: Int, contactName: String) -> Unit,
+    onConversationClick: (conversationId: Int, otherUserId: Int, contactName: String, isAdmin: Boolean) -> Unit,
     onNewMessageClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -139,7 +139,12 @@ fun ChatsListPage(
                         ConversationItem(
                             conversation = conversation,
                             onClick = {
-                                onConversationClick(conversation.conversationId, conversation.otherUserId, conversation.contactName)
+                                onConversationClick(
+                                    conversation.conversationId,
+                                    conversation.otherUserId,
+                                    conversation.contactName,
+                                    conversation.isAdmin
+                                )
                             }
                         )
                     }

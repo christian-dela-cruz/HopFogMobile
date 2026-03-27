@@ -42,7 +42,7 @@ private enum class ChatSortMode(val label: String, val icon: ImageVector) {
 @Composable
 fun ChatsListPage(
     chatViewModel: ChatViewModel,
-    onConversationClick: (conversationId: Int, otherUserId: Int, contactName: String, isAdmin: Boolean) -> Unit,
+    onConversationClick: (conversationId: Int, otherUserId: Int, contactName: String) -> Unit,
     onNewMessageClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -56,12 +56,11 @@ fun ChatsListPage(
     }
 
     val sortedConversations = remember(conversations, chatSortMode) {
-        val nonAdminConversations = conversations.filter { !it.isAdmin }
         when (chatSortMode) {
             ChatSortMode.NEWEST_FIRST ->
-                nonAdminConversations.sortedByDescending { parseTimestampToMillis(it.timestamp) }
+                conversations.sortedByDescending { parseTimestampToMillis(it.timestamp) }
             ChatSortMode.OLDEST_FIRST ->
-                nonAdminConversations.sortedBy { parseTimestampToMillis(it.timestamp) }
+                conversations.sortedBy { parseTimestampToMillis(it.timestamp) }
         }
     }
 
@@ -143,8 +142,7 @@ fun ChatsListPage(
                                 onConversationClick(
                                     conversation.conversationId,
                                     conversation.otherUserId,
-                                    conversation.contactName,
-                                    conversation.isAdmin
+                                    conversation.contactName
                                 )
                             }
                         )

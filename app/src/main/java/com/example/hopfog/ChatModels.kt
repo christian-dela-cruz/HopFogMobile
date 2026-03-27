@@ -55,14 +55,11 @@ data class ChatConversation(
     @SerialName("contact_name")
     val contactName: String,
     @SerialName("last_message")
-    val lastMessage: String?,
+    val lastMessage: String? = null,
     @SerialName("timestamp")
-    val timestamp: String?,
+    val timestamp: String? = null,
     @SerialName("other_user_id")
-    val otherUserId: Int = 0,
-    @Serializable(with = PHPBooleanSerializer::class)
-    @SerialName("is_admin")
-    val isAdmin: Boolean = false
+    val otherUserId: Int = 0
 )
 
 @Serializable
@@ -127,10 +124,7 @@ data class SelectableUser(
     val role: String = "",
     @Serializable(with = PHPBooleanSerializer::class)
     @SerialName("is_online")
-    val isOnline: Boolean = false,
-    @Serializable(with = PHPBooleanSerializer::class)
-    @SerialName("is_admin")
-    val isAdmin: Boolean = false
+    val isOnline: Boolean = false
 )
 
 @Serializable

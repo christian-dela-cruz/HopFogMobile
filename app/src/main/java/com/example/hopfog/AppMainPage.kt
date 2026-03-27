@@ -231,23 +231,8 @@ fun AppMainPage(
                 composable("chats_list") {
                     ChatsListPage(
                         chatViewModel = chatViewModel,
-                        onConversationClick = { conversationId, otherUserId, contactName, isAdmin ->
-                            if (isAdmin) {
-                                // Admin contact is SOS-only — redirect to the SOS flow
-                                val hasAgreed = SessionManager.hasAgreedToSos(context)
-                                if (hasAgreed) {
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        val sosResponse = NetworkManager.findOrCreateSosChat(context)
-                                        if (sosResponse != null) {
-                                            innerNavController.navigate("sos_messages/${sosResponse.conversationId}/${sosResponse.contactName}")
-                                        }
-                                    }
-                                } else {
-                                    innerNavController.navigate("sos_agreement")
-                                }
-                            } else {
-                                innerNavController.navigate("messages/$conversationId/$otherUserId/$contactName")
-                            }
+                        onConversationClick = { conversationId, otherUserId, contactName ->
+                            innerNavController.navigate("messages/$conversationId/$otherUserId/$contactName")
                         },
                         onNewMessageClick = {
                             innerNavController.navigate("new_message_page")

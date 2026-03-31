@@ -1,13 +1,5 @@
 # HopFog Mobile Application (Android)
 
-> **Suggested repository description:**
-> HopFog Android mobile app for offline community messaging via LANET (ESP32 SoftAP) + IEEE 802.15.4 (XBee/Zigbee) fog network.
-
-> **Suggested repository topics:**
-> `android` `kotlin` `jetpack-compose` `fog-computing` `lanet` `iot` `xbee` `zigbee` `ieee-802-15-4` `offline-messaging` `emergency-communications`
-
----
-
 ## Overview
 
 **HopFog** is a fog-computing-based, infrastructure-independent community communication system designed for offline and local emergency messaging. It operates without an internet connection by leveraging a local Wi-Fi network formed by ESP32-based Fog Access Point Nodes.
@@ -179,14 +171,6 @@ All requests go to `BASE_URL` (`http://hopfog.com`) over the local LANET connect
 | `GET` | `/announcements` | Fetch community announcements |
 | `GET` | `/status` | Check if the fog node is reachable |
 | `GET` | `/api/conversation/{otherUserId}` | Get full conversation history with a user |
-
----
-
-## Planned Improvements
-
-- **Local conversation archive** using Room (SQLite) as an offline cache — partially implemented in `app/src/main/java/com/example/hopfog/data/`
-- Push notification improvements for background message delivery
-- UI/UX enhancements based on community feedback
 
 ---
 

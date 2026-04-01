@@ -11,31 +11,57 @@ This repository contains the **HopFog Mobile Application**, the primary resident
 ## Architecture Summary
 
 ```
-┌─────────────────────┐        Wi-Fi SoftAP (LANET)       ┌──────────────────────────────┐
-│  HopFog Mobile App  │  ─────────────────────────────►   │  ESP32 Fog Access Point Node  │
-│  (this repository)  │  ◄─────────────────────────────   │  (HTTP server on hopfog.com)  │
-└─────────────────────┘                                    └──────────────┬───────────────┘
-                                                                          │
-                                                           IEEE 802.15.4 XBee/Zigbee mesh
-                                                                          │
-                                                           ┌──────────────▼───────────────┐
-                                                           │  Community Data Center        │
-                                                           │  (Local fog-based services)   │
-                                                           │  Admin web app, JSON storage  │
-                                                           └──────────────────────────────┘
+                         ┌──────────────────────────────────────────────────────────────┐
+                         │                   LOCAL AREA NETWORK (LANET)                 │
+                         │                                                              │
+  ┌──────────────────┐   │   ┌───────────────────────────┐                             │
+  │  HopFog Mobile   │Wi-Fi  │   ESP32 Fog Access Point   │                             │
+  │  App (Android)   │◄─────►│         Node(s)            │                             │
+  │  (this repo)     │  SoftAP│  • Wi-Fi SoftAP gateway   │                             │
+  └──────────────────┘   │   │  • HTTP server (hopfog.com)│                             │
+                         │   │  • Auth, messaging, routing│                             │
+                         │   └──────────────┬────────────┘                             │
+                         │                  │                                           │
+                         │      IEEE 802.15.4 XBee / Zigbee Multi-hop Mesh             │
+                         │                  │                                           │
+                         │   ┌──────────────▼────────────────────────────────────┐     │
+                         │   │           Community Data Center                   │     │
+                         │   │  ┌─────────────────┐   ┌───────────────────────┐ │     │
+                         │   │  │  FastAPI Server  │   │   Admin Web Dashboard │ │     │
+                         │   │  │  (Python)        │   │   (Jinja2 templates)  │ │     │
+                         │   │  └────────┬─────────┘   └───────────────────────┘ │     │
+                         │   │           │                                        │     │
+                         │   │  ┌────────▼─────────┐   ┌───────────────────────┐ │     │
+                         │   │  │  SQLite Database  │   │   XBee Module         │ │     │
+                         │   │  │  (SQLAlchemy ORM) │   │   (Broadcast dispatch)│ │     │
+                         │   │  └──────────────────┘   └───────────────────────┘ │     │
+                         │   └───────────────────────────────────────────────────┘     │
+                         │                                                              │
+                         └──────────────────────────────────────────────────────────────┘
 ```
 
-**Flow:**
-1. The resident's phone connects to a nearby **ESP32 SoftAP** node over Wi-Fi, forming a **Local Ad-hoc Network (LANET)**.
-2. The mobile app communicates with the ESP32 node at `http://hopfog.com` over this local connection.
-3. The ESP32 node formats, secures (**AES-128 encryption**), and relays messages across the community through an **IEEE 802.15.4 multi-hop backbone** using XBee/Zigbee modules.
-4. Messages ultimately reach the **Community Data Center**, a local fog-based server that hosts admin services and persists data using JSON-based file storage.
+**Components:**
 
-> **Security note:** Messages are encrypted at the fog layer using AES-128. No encryption keys are stored in this mobile application.
+| Component | Role |
+|-----------|------|
+| **HopFog Mobile App** | Resident-facing Android client. Connects to the nearest ESP32 node over Wi-Fi and polls for messages, announcements, and SOS updates. |
+| **ESP32 Fog Access Point Node(s)** | Field-deployed IoT gateways. Each creates a Wi-Fi SoftAP (SSID: `HopFog-Node-XX` or `HopFog-Network`) and runs an HTTP server at `hopfog.com`. Handles resident auth, messaging, and online tracking. Connected to the backbone via XBee. |
+| **IEEE 802.15.4 XBee/Zigbee Mesh** | Multi-hop wireless backbone linking ESP32 nodes to the Community Data Center, enabling data relay across the community without internet. |
+| **Community Data Center** | Central hub running a **Python FastAPI** web server backed by a **SQLite** database (via SQLAlchemy). Hosts the **admin web dashboard**, manages users, processes messages, dispatches broadcasts, monitors fog nodes, and drives XBee transmissions for community-wide announcements. |
+
+**Communication Flows:**
+
+1. **Resident login / messaging / SOS:** The resident's phone connects to a nearby **ESP32 SoftAP** over Wi-Fi. The mobile app sends HTTP requests to `http://hopfog.com` (the ESP32 HTTP server). The ESP32 node relays data to the **Community Data Center** over the **XBee mesh backbone**.
+2. **Community broadcast / announcement:** An admin creates a broadcast on the **Admin Web Dashboard** → the **FastAPI BroadcastDispatcher** queues it → the **XBee module** transmits it wirelessly to all ESP32 nodes → the mobile app receives it via HTTP polling.
+3. **SOS alert:** A resident taps SOS → the message is tagged `kind = "sos_request"` and sent through the ESP32 → the Data Center admin is notified and can escalate it to an alert or broadcast.
+
+> **Note:** All communication stays within the local area network. No internet connection is required or used.
 
 ---
 
 ## Tech Stack
+
+### Mobile App (this repository)
 
 | Component | Technology |
 |-----------|-----------|
@@ -49,6 +75,17 @@ This repository contains the **HopFog Mobile Application**, the primary resident
 | Background Service | Android `Service` (foreground, for message polling) |
 | Message Updates | HTTP polling (every 3 s in-app, every 15 s background) |
 | Async | Kotlin Coroutines |
+
+### Community Data Center (server-side)
+
+| Component | Technology |
+|-----------|-----------|
+| Web Framework | Python FastAPI |
+| Database | SQLite via SQLAlchemy ORM |
+| Admin UI | Jinja2 HTML templates |
+| Authentication | JWT (bcrypt password hashing) |
+| Wireless Backbone | XBee/Zigbee (digi-xbee library, IEEE 802.15.4) |
+| Broadcast Dispatch | Async broadcast dispatcher (priority queue) |
 
 ---
 

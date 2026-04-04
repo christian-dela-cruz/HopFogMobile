@@ -216,8 +216,8 @@ All requests go to `BASE_URL` (`http://hopfog.com`) over the local LANET connect
 <p align="center">
   <img src="https://github.com/user-attachments/assets/66e56f3b-e8cd-41c8-80b3-0ab78fffd113" width="22%" />
   <img src="https://github.com/user-attachments/assets/dc5230a6-ad0a-4dfd-856a-6875b0b9dc35" width="22%" />
-  <img src="https://github.com/user-attachments/assets/d7ce698c-f9dd-4a32-8de6-23b19b2c4fea" width="22%" />
   <img src="https://github.com/user-attachments/assets/84142b14-dc1e-42d5-9259-1d3a26ac1e3f" width="22%" />
+  <img src="https://github.com/user-attachments/assets/d7ce698c-f9dd-4a32-8de6-23b19b2c4fea" width="22%" />
 </p>
 
 ---
